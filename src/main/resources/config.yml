@@ -1,0 +1,20 @@
+#
+# ==== General info ====
+#
+# * After editing of this file you need to check server logs to be
+# sure that no errors was appeared.
+#
+
+#
+# Show debug info. Possible values: true | false (default = false)
+#
+# This option can affect the performance.
+#
+debug: false
+
+#
+# Enable main features. Possible values: true | false (default = false)
+#
+# This option hugely affects game-play due to smart shoots.
+#
+enabled: true

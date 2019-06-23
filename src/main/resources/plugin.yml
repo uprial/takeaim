@@ -1,0 +1,13 @@
+name: TakeAim
+main: com.gmail.uprial.takeaim.TakeAim
+version: 0.1.0
+commands:
+   takeaim:
+      description: Reload TakeAim config
+      usage: /takeaim help
+      permission:
+      permission-message:
+permissions:
+  takeaim.reload:
+        description: Gives access to TakeAim 'reload' command
+        default: op
