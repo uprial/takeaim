@@ -24,6 +24,8 @@ public class TakeAimAttackEventListener implements Listener {
     final TakeAim plugin;
     final CustomLogger customLogger;
 
+    private static final double MAX_ARROW_SPEED_PER_TICK = 3.0;
+
     private static final String MK_TARGET_PLAYER_UUID = "target-player-uuid";
 
     public TakeAimAttackEventListener(TakeAim plugin, CustomLogger customLogger) {
@@ -72,17 +74,53 @@ public class TakeAimAttackEventListener implements Listener {
         }
     }
 
-    private void fixProjectileTrajectory(LivingEntity projectileSource, Projectile projectile, Player targetPlayer) {
-        Location targetLocation = targetPlayer.getEyeLocation();
-        Vector projectileVelocity = projectile.getVelocity();
-        Location projectileLocation = projectile.getLocation();
+    /*
+        Try #1
 
-        double ticksInFly = targetLocation.distance(projectile.getLocation()) / projectileVelocity.length();
+        Let's assume, we have a flying projectile.
+        We should keep its momentum, but retarget better.
+        We should assume the target moves.
 
-        double vx = (targetLocation.getX() - projectileLocation.getX()) / ticksInFly;
-        double vz = (targetLocation.getZ() - projectileLocation.getZ()) / ticksInFly;
+        s = source
+        t = target
+        e = end point or "meeting" point
 
-        /*
+        a) The projectile in the end point
+        xe = xs + vxs * t
+        ye = ys + vys * t + g * t^2 / 2
+        ze = zs + vzs * t
+
+        Momentum
+        vxs^2 + vys^2 + vzs^2 = r
+
+        The target in the end point
+        xe = xt + vxt * t
+        ye = yt + vyt * t
+        ze = zt + vzt * t
+
+        b) Then
+        xt + vxt * t = xs + vxs * t
+        yt + vyt * t = ys + vys * t + g * t^2 / 2
+        zt + vzt * t = zs + vzs * t
+        vxs^2 + vys^2 + vzs^2 = r
+
+        c) Then
+        vxs = (xt + vxt * t - xs) /  t = vxt + (xt - xs)/t
+        vys = yt + vyt * t - (g * t^2 / 2 + ys) / t
+        vzs = (zt + vzt * t - zs)) / t= vzt + (zt - zs)/t
+        vxs^2 + vys^2 + vzs^2 = r
+
+        So, we have a biquadratic equation that only a mother could love. Let's try to simplify the case.
+
+        Try #2
+
+        Assume, we don't need to keep the momentum because we control a non-player entity anyway.
+        We have to make sure two things happen:
+        - a projectile does not fly too fast,
+        - the projectile meets the target exactly at the time.
+
+        So, we need to calculate only Y axis:
+
         y2 = y1 + vy * t + g * t^2 / 2 =>
             vy = (y2 - g * t^2 / 2 - y1) / t
 
@@ -96,12 +134,41 @@ public class TakeAimAttackEventListener implements Listener {
 
           t = 10.0 / 20.0 = 0.5,
           vy = (0 - (- 20.0 * 0.5^2 / 2) - 0) / 0.5 =:= 20.0 / 4 =:= 5 (m/s)
-         */
+
+
+        Now we have to check that our target isn't too far away.
+        Assuming an experimental maximum momentum and an angle of 45 grades, let's calculate a maximum distance.
+
+        m = MAX_ARROW_SPEED_PER_TICK
+        t = cos(a) * m / g = sqrt(2) * m / g
+        d = sin(a) * m * t = sqrt(2) * sqrt(2) * m * m / g = m^2 / g
+
+     */
+    private void fixProjectileTrajectory(LivingEntity projectileSource, Projectile projectile, Player targetPlayer) {
+        Location targetLocation = targetPlayer.getEyeLocation();
+        Location projectileLocation = projectile.getLocation();
+
+        double g = getGravityAcceleration(projectile);
+        double distance = targetLocation.distance(projectile.getLocation());
+
+        double maxDistance = - Math.pow(MAX_ARROW_SPEED_PER_TICK * SERVER_TICKS_IN_SECOND, 2.0) / g;
+
+        if(distance > maxDistance) {
+            customLogger.warning(String.format("Can't modify projectile velocity of %s targeted at %s at a distance of %.2f. Max distance is %.2f",
+                    format(projectileSource), format(targetPlayer), distance, maxDistance));
+            return;
+        }
+
+        Vector projectileVelocity = projectile.getVelocity();
+        double ticksInFly = distance / projectileVelocity.length();
+
+        double vx = (targetLocation.getX() - projectileLocation.getX()) / ticksInFly;
+        double vz = (targetLocation.getZ() - projectileLocation.getZ()) / ticksInFly;
 
         double y1 = 0.0;
         double y2 = targetLocation.getY() - projectileLocation.getY();
         double t = ticksInFly / SERVER_TICKS_IN_SECOND;
-        double vy = ((y2 - ((getGravityAcceleration(projectile) * (t * t)) / 2.0) - y1) / t) / SERVER_TICKS_IN_SECOND;
+        double vy = ((y2 - (g * t * t / 2.0) - y1) / t) / SERVER_TICKS_IN_SECOND;
 
         // Consider the target player is running somewhere ...
         Vector targetVelocity = getPlayerMovementVector(targetPlayer);
@@ -113,7 +180,7 @@ public class TakeAimAttackEventListener implements Listener {
         projectile.setVelocity(newVelocity);
 
         if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Modify projective's velocity of %s on %s from %s to %s",
+            customLogger.debug(String.format("Modify projectile velocity of %s targeted at %s from %s to %s",
                     format(projectileSource), format(targetPlayer), format(projectileVelocity), format(newVelocity)));
         }
     }
