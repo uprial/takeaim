@@ -30,16 +30,11 @@ public class TakeAimPlayerTracker extends BukkitRunnable {
 
     public static Vector getPlayerMovementVector(Player player) {
         UUID uuid = player.getUniqueId();
-        if(!PLAYERS.containsKey(uuid)) {
-            return new Vector(0.0, 0.0, 0.0);
-        } else {
-            Map<Boolean, Location> bucket = PLAYERS.get(uuid);
-            if(!bucket.containsKey(true) || !bucket.containsKey(false)) {
-                return new Vector(0.0, 0.0, 0.0);
-            } else {
-                Location CurrentLocation = bucket.get(SIDE);
-                Location OldLocation = bucket.get(!SIDE);
-
+        Map<Boolean, Location> bucket = PLAYERS.get(uuid);
+        if(bucket != null) {
+            Location CurrentLocation = bucket.get(SIDE);
+            Location OldLocation = bucket.get(!SIDE);
+            if((CurrentLocation != null) || (OldLocation != null)) {
                 return new Vector(
                         (CurrentLocation.getX() - OldLocation.getX()) / INTERVAL,
                         (CurrentLocation.getY() - OldLocation.getY()) / INTERVAL,
@@ -47,6 +42,7 @@ public class TakeAimPlayerTracker extends BukkitRunnable {
                 );
             }
         }
+        return new Vector(0.0, 0.0, 0.0);
     }
 
     @Override
