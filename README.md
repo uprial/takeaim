@@ -29,7 +29,7 @@ I will be happy to add some features or fix bugs. My mail: uprial@gmail.com.
 
 ## Useful links
 * [Project on GitHub](https://github.com/uprial/takeaim/)
-* [Project on Bukkit Dev](http://dev.bukkit.org/bukkit-plugins/take-aim/)
+* [Project on Bukkit Dev](http://dev.bukkit.org/bukkit-plugins/takeaim/)
 
 ## Related projects
 * CustomNukes: [Bukkit Dev](http://dev.bukkit.org/bukkit-plugins/customnukes/), [GitHub](https://github.com/uprial/customnukes)
