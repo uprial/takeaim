@@ -10,8 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.gmail.uprial.takeaim.common.Utils.SERVER_TICKS_IN_SECOND;
+
 public class TakeAimPlayerTracker extends BukkitRunnable {
-    private static final int INTERVAL = 10;
+    private static final int INTERVAL = SERVER_TICKS_IN_SECOND / 2;
 
     private final TakeAim plugin;
 
