@@ -15,6 +15,4 @@ debug: false
 #
 # Enable main features. Possible values: true | false (default = false)
 #
-# This option hugely affects game-play due to smart shoots.
-#
 enabled: true
