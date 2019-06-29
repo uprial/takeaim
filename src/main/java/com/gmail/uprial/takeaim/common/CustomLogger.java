@@ -52,7 +52,7 @@ public class CustomLogger {
         String consoleMessage = !messageType.isEmpty()
                 ? String.format("[%s] %s", messageType, message) : message;
 
-        if (sender != null) {
+        if ((sender != null) && (!sender.getName().equals("CONSOLE"))) {
             log2console(level, String.format("%s [user=%s]", consoleMessage, sender.getName()));
 
             String userMessage = message;
