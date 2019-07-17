@@ -37,13 +37,13 @@ public class TakeAimAttackEventListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onEntityTargetEvent(EntityTargetEvent event) {
         if ((plugin.getTakeAimConfig().isEnabled()) && (!event.isCancelled())) {
-            Entity source = event.getEntity();
+            final Entity source = event.getEntity();
             // Performance improvement: ProjectileSource instead of LivingEntity
             if (source instanceof ProjectileSource) {
-                LivingEntity projectileSource = (LivingEntity) source;
-                Entity target = event.getTarget();
+                final LivingEntity projectileSource = (LivingEntity) source;
+                final Entity target = event.getTarget();
                 if (target instanceof Player) {
-                    Player targetPlayer = (Player) target;
+                    final Player targetPlayer = (Player) target;
                     setMetadata(plugin, projectileSource, MK_TARGET_PLAYER_UUID, targetPlayer.getUniqueId());
                 } else {
                     // Clear the target
@@ -57,14 +57,14 @@ public class TakeAimAttackEventListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onProjectileLaunchEvent(ProjectileLaunchEvent event) {
         if ((plugin.getTakeAimConfig().isEnabled()) && (!event.isCancelled())) {
-            Projectile projectile = event.getEntity();
+            final Projectile projectile = event.getEntity();
             if (hasGravityAcceleration(projectile)) {
-                ProjectileSource shooter = projectile.getShooter();
+                final ProjectileSource shooter = projectile.getShooter();
                 if (shooter instanceof LivingEntity) {
-                    LivingEntity projectileSource = (LivingEntity) shooter;
-                    UUID targetPlayerUUID = getMetadata(projectileSource, MK_TARGET_PLAYER_UUID);
+                    final LivingEntity projectileSource = (LivingEntity) shooter;
+                    final UUID targetPlayerUUID = getMetadata(projectileSource, MK_TARGET_PLAYER_UUID);
                     if (targetPlayerUUID != null) {
-                        Player targetPlayer = plugin.getOnlinePlayerByUUID(targetPlayerUUID);
+                        final Player targetPlayer = plugin.getOnlinePlayerByUUID(targetPlayerUUID);
                         if (targetPlayer != null) {
                             fixProjectileTrajectory(projectileSource, projectile, targetPlayer);
                         }

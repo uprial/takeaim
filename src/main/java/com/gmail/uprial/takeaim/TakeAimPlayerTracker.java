@@ -20,11 +20,11 @@ public class TakeAimPlayerTracker extends BukkitRunnable {
     private static final Map<UUID, Map<Boolean, Location>> PLAYERS = new HashMap<>();
     private static boolean SIDE = true;
 
-    public TakeAimPlayerTracker(TakeAim plugin) {
+    TakeAimPlayerTracker(TakeAim plugin) {
         this.plugin = plugin;
     }
 
-    public BukkitTask runTaskTimer() {
+    BukkitTask runTaskTimer() {
         return runTaskTimer(plugin, INTERVAL, INTERVAL);
     }
 

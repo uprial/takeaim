@@ -42,7 +42,7 @@ public final class TakeAim extends JavaPlugin {
         return takeAimConfig;
     }
 
-    public void reloadConfig(CustomLogger userLogger) {
+    void reloadConfig(CustomLogger userLogger) {
         reloadConfig();
         takeAimConfig = loadConfig(getConfig(), userLogger, consoleLogger);
     }
@@ -76,7 +76,7 @@ public final class TakeAim extends JavaPlugin {
         return null;
     }
 
-    static TakeAimConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
+    private static TakeAimConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
         return loadConfig(config, customLogger, null);
     }
 

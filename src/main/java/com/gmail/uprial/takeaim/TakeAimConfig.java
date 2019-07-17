@@ -12,15 +12,15 @@ public final class TakeAimConfig {
         this.enabled = enabled;
     }
 
-    public static boolean isDebugMode(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
+    static boolean isDebugMode(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
         return ConfigReaderSimple.getBoolean(config, customLogger, "debug", "'debug' flag", false);
     }
 
-    public  boolean isEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
-    public static TakeAimConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
+    static TakeAimConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
         boolean enabled = ConfigReaderSimple.getBoolean(config, customLogger, "enabled", "'enabled' flag", true);
 
         return new TakeAimConfig(enabled);
