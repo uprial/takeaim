@@ -1,9 +1,8 @@
-package com.gmail.uprial.takeaim;
+package com.gmail.uprial.takeaim.tracker;
 
+import com.gmail.uprial.takeaim.TakeAim;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
@@ -12,28 +11,33 @@ import java.util.UUID;
 
 import static com.gmail.uprial.takeaim.common.Utils.SERVER_TICKS_IN_SECOND;
 
-public class TakeAimPlayerTracker extends BukkitRunnable {
+public class PlayerTracker {
     private static final int INTERVAL = SERVER_TICKS_IN_SECOND / 2;
 
     private final TakeAim plugin;
 
-    private static final Map<UUID, Map<Boolean, Location>> PLAYERS = new HashMap<>();
-    private static boolean SIDE = true;
+    private final PlayerTrackerTask task;
 
-    TakeAimPlayerTracker(TakeAim plugin) {
+    private final Map<UUID, Map<Boolean, Location>> players = new HashMap<>();
+    private boolean side = true;
+
+    public PlayerTracker(TakeAim plugin) {
         this.plugin = plugin;
+
+        task = new PlayerTrackerTask(this);
+        task.runTaskTimer(plugin, INTERVAL, INTERVAL);
     }
 
-    BukkitTask runTaskTimer() {
-        return runTaskTimer(plugin, INTERVAL, INTERVAL);
+    public void stop() {
+        task.cancel();
     }
 
-    public static Vector getPlayerMovementVector(Player player) {
+    public Vector getPlayerMovementVector(Player player) {
         UUID uuid = player.getUniqueId();
-        Map<Boolean, Location> bucket = PLAYERS.get(uuid);
+        Map<Boolean, Location> bucket = players.get(uuid);
         if(bucket != null) {
-            Location CurrentLocation = bucket.get(SIDE);
-            Location OldLocation = bucket.get(!SIDE);
+            Location CurrentLocation = bucket.get(side);
+            Location OldLocation = bucket.get(!side);
             if((CurrentLocation != null) || (OldLocation != null)) {
                 return new Vector(
                         (CurrentLocation.getX() - OldLocation.getX()) / INTERVAL,
@@ -45,20 +49,29 @@ public class TakeAimPlayerTracker extends BukkitRunnable {
         return new Vector(0.0, 0.0, 0.0);
     }
 
-    @Override
-    public void run() {
+    public Player getOnlinePlayerByUUID(UUID uuid) {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            if (player.getUniqueId().equals(uuid)) {
+                return player;
+            }
+        }
+
+        return null;
+    }
+
+    void run() {
         if(plugin.getTakeAimConfig().isEnabled()){
-            SIDE = !SIDE;
+            side = !side;
             for (Player player : plugin.getServer().getOnlinePlayers()) {
                 UUID uuid = player.getUniqueId();
                 Map<Boolean, Location> bucket;
-                if (PLAYERS.containsKey(uuid)) {
-                    bucket = PLAYERS.get(uuid);
+                if (players.containsKey(uuid)) {
+                    bucket = players.get(uuid);
                 } else {
                     bucket = new HashMap<>();
-                    PLAYERS.put(uuid, bucket);
+                    players.put(uuid, bucket);
                 }
-                bucket.put(SIDE, player.getLocation());
+                bucket.put(side, player.getLocation());
 
             }
         }

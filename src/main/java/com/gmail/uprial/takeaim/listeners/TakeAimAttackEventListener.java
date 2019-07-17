@@ -64,7 +64,7 @@ public class TakeAimAttackEventListener implements Listener {
                     final LivingEntity projectileSource = (LivingEntity) shooter;
                     final UUID targetPlayerUUID = getMetadata(projectileSource, MK_TARGET_PLAYER_UUID);
                     if (targetPlayerUUID != null) {
-                        final Player targetPlayer = plugin.getOnlinePlayerByUUID(targetPlayerUUID);
+                        final Player targetPlayer = plugin.getPlayerTracker().getOnlinePlayerByUUID(targetPlayerUUID);
                         if (targetPlayer != null) {
                             fixProjectileTrajectory(projectileSource, projectile, targetPlayer);
                         }
@@ -171,7 +171,7 @@ public class TakeAimAttackEventListener implements Listener {
         double vy = ((y2 - (g * t * t / 2.0) - y1) / t) / SERVER_TICKS_IN_SECOND;
 
         // Consider the target player is running somewhere ...
-        Vector targetVelocity = getPlayerMovementVector(targetPlayer);
+        Vector targetVelocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
         vx += targetVelocity.getX();
         vy += targetVelocity.getY();
         vz += targetVelocity.getZ();

@@ -3,15 +3,14 @@ package com.gmail.uprial.takeaim;
 import com.gmail.uprial.takeaim.common.CustomLogger;
 import com.gmail.uprial.takeaim.config.InvalidConfigException;
 import com.gmail.uprial.takeaim.listeners.TakeAimAttackEventListener;
+import com.gmail.uprial.takeaim.tracker.PlayerTracker;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
-import java.util.UUID;
 
 import static com.gmail.uprial.takeaim.TakeAimCommandExecutor.COMMAND_NS;
 
@@ -22,7 +21,7 @@ public final class TakeAim extends JavaPlugin {
     private CustomLogger consoleLogger = null;
     private TakeAimConfig takeAimConfig = null;
 
-    private BukkitTask playerTrackerTask;
+    private PlayerTracker playerTracker;
 
     @Override
     public void onEnable() {
@@ -31,7 +30,7 @@ public final class TakeAim extends JavaPlugin {
         consoleLogger = new CustomLogger(getLogger());
         takeAimConfig = loadConfig(getConfig(), consoleLogger);
 
-        playerTrackerTask = new TakeAimPlayerTracker(this).runTaskTimer();
+        playerTracker = new PlayerTracker(this);
         getServer().getPluginManager().registerEvents(new TakeAimAttackEventListener(this, consoleLogger), this);
 
         getCommand(COMMAND_NS).setExecutor(new TakeAimCommandExecutor(this));
@@ -42,6 +41,10 @@ public final class TakeAim extends JavaPlugin {
         return takeAimConfig;
     }
 
+    public PlayerTracker getPlayerTracker() {
+        return playerTracker;
+    }
+
     void reloadConfig(CustomLogger userLogger) {
         reloadConfig();
         takeAimConfig = loadConfig(getConfig(), userLogger, consoleLogger);
@@ -50,7 +53,7 @@ public final class TakeAim extends JavaPlugin {
     @Override
     public void onDisable() {
         HandlerList.unregisterAll(this);
-        playerTrackerTask.cancel();
+        playerTracker.stop();
         consoleLogger.info("Plugin disabled");
     }
 
@@ -64,16 +67,6 @@ public final class TakeAim extends JavaPlugin {
     @Override
     public FileConfiguration getConfig() {
         return YamlConfiguration.loadConfiguration(configFile);
-    }
-
-    public Player getOnlinePlayerByUUID(UUID uuid) {
-        for (Player player : getServer().getOnlinePlayers()) {
-            if (player.getUniqueId().equals(uuid)) {
-                return player;
-            }
-        }
-
-        return null;
     }
 
     private static TakeAimConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
