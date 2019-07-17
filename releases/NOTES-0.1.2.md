@@ -6,3 +6,4 @@
 # New features
 * Added tracking of every projectile in debug mode.
 * Consider the environmental drag.
+* Adjusted fireballs.

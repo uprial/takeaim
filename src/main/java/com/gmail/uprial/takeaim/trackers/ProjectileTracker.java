@@ -15,7 +15,7 @@ public class ProjectileTracker implements Runnable {
     private final TakeAim plugin;
     private final CustomLogger customLogger;
 
-    private final TrackerTask<ProjectileTracker> task;
+    private TrackerTask<ProjectileTracker> task;
 
     private final Map<Projectile,Integer> projectiles = new HashMap<>();
     private final AtomicInteger projectileIdIncrement = new AtomicInteger();
@@ -26,7 +26,6 @@ public class ProjectileTracker implements Runnable {
         this.plugin = plugin;
         this.customLogger = customLogger;
 
-        task = new TrackerTask<>(this);
         onConfigChange();
     }
 
@@ -80,9 +79,12 @@ public class ProjectileTracker implements Runnable {
     private void setEnabled(boolean enabled) {
         if(this.enabled != enabled) {
             if (enabled) {
+                task = new TrackerTask<>(this);
                 task.runTaskTimer(plugin, INTERVAL, INTERVAL);
             } else {
                 task.cancel();
+                task = null;
+
                 projectiles.clear();
                 projectileIdIncrement.set(0);
             }
