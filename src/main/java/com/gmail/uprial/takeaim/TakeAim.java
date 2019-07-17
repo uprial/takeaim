@@ -4,11 +4,11 @@ import com.gmail.uprial.takeaim.common.CustomLogger;
 import com.gmail.uprial.takeaim.config.InvalidConfigException;
 import com.gmail.uprial.takeaim.listeners.TakeAimAttackEventListener;
 import com.gmail.uprial.takeaim.tracker.PlayerTracker;
+import com.gmail.uprial.takeaim.tracker.ProjectileTracker;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 
@@ -22,6 +22,7 @@ public final class TakeAim extends JavaPlugin {
     private TakeAimConfig takeAimConfig = null;
 
     private PlayerTracker playerTracker;
+    private ProjectileTracker projectileTracker;
 
     @Override
     public void onEnable() {
@@ -31,6 +32,8 @@ public final class TakeAim extends JavaPlugin {
         takeAimConfig = loadConfig(getConfig(), consoleLogger);
 
         playerTracker = new PlayerTracker(this);
+        projectileTracker = new ProjectileTracker(this, consoleLogger);
+
         getServer().getPluginManager().registerEvents(new TakeAimAttackEventListener(this, consoleLogger), this);
 
         getCommand(COMMAND_NS).setExecutor(new TakeAimCommandExecutor(this));
@@ -45,14 +48,20 @@ public final class TakeAim extends JavaPlugin {
         return playerTracker;
     }
 
+    public ProjectileTracker getProjectileTracker() {
+        return projectileTracker;
+    }
+
     void reloadConfig(CustomLogger userLogger) {
         reloadConfig();
         takeAimConfig = loadConfig(getConfig(), userLogger, consoleLogger);
+        projectileTracker.onConfigChange();
     }
 
     @Override
     public void onDisable() {
         HandlerList.unregisterAll(this);
+        projectileTracker.stop();
         playerTracker.stop();
         consoleLogger.info("Plugin disabled");
     }

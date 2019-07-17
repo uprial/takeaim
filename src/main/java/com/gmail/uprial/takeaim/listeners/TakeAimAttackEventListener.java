@@ -58,6 +58,9 @@ public class TakeAimAttackEventListener implements Listener {
     public void onProjectileLaunchEvent(ProjectileLaunchEvent event) {
         if ((plugin.getTakeAimConfig().isEnabled()) && (!event.isCancelled())) {
             final Projectile projectile = event.getEntity();
+
+            plugin.getProjectileTracker().onLaunch(projectile);
+
             if (hasGravityAcceleration(projectile)) {
                 final ProjectileSource shooter = projectile.getShooter();
                 if (shooter instanceof LivingEntity) {
@@ -71,6 +74,14 @@ public class TakeAimAttackEventListener implements Listener {
                     }
                 }
             }
+        }
+    }
+
+    @SuppressWarnings({"unused", "MethodMayBeStatic"})
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onProjectileHitEvent(ProjectileHitEvent event) {
+        if ((plugin.getTakeAimConfig().isEnabled())) {
+            plugin.getProjectileTracker().onHit(event.getEntity());
         }
     }
 

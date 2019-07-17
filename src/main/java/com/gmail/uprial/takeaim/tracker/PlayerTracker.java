@@ -30,6 +30,7 @@ public class PlayerTracker {
 
     public void stop() {
         task.cancel();
+        players.clear();
     }
 
     public Vector getPlayerMovementVector(Player player) {
