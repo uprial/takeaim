@@ -80,15 +80,11 @@ public class ProjectileTracker implements Runnable {
     private void setEnabled(boolean enabled) {
         if(this.enabled != enabled) {
             if (enabled) {
-                if (task.isCancelled()) {
-                    task.runTaskTimer(plugin, INTERVAL, INTERVAL);
-                }
+                task.runTaskTimer(plugin, INTERVAL, INTERVAL);
             } else {
-                if (!task.isCancelled()) {
-                    task.cancel();
-                    projectiles.clear();
-                    projectileIdIncrement.set(0);
-                }
+                task.cancel();
+                projectiles.clear();
+                projectileIdIncrement.set(0);
             }
 
             this.enabled = enabled;
@@ -96,7 +92,7 @@ public class ProjectileTracker implements Runnable {
     }
 
     private void log(int projectileId, Projectile projectile, String action) {
-        customLogger.debug(String.format("Projectile #%d %s %s with velocity %s",
+        customLogger.debug(String.format("#%d %s %s with %s",
                 projectileId, format(projectile), action, format(projectile.getVelocity())));
     }
 }

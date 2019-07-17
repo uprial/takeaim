@@ -1,6 +1,7 @@
 package com.gmail.uprial.takeaim.listeners;
 
 import com.gmail.uprial.takeaim.TakeAim;
+import com.gmail.uprial.takeaim.ballistics.ProjectileMotion;
 import com.gmail.uprial.takeaim.common.CustomLogger;
 import org.bukkit.Location;
 import org.bukkit.entity.*;
@@ -21,10 +22,10 @@ import static com.gmail.uprial.takeaim.common.MetadataHelper.setMetadata;
 import static com.gmail.uprial.takeaim.common.Utils.SERVER_TICKS_IN_SECOND;
 
 public class TakeAimAttackEventListener implements Listener {
-    final TakeAim plugin;
-    final CustomLogger customLogger;
+    private final TakeAim plugin;
+    private final CustomLogger customLogger;
 
-    private static final double MAX_ARROW_SPEED_PER_TICK = 3.0;
+    private static final double MAX_ARROW_SPEED_PER_TICK = 3.0D;
 
     private static final String MK_TARGET_PLAYER_UUID = "target-player-uuid";
 
@@ -61,7 +62,7 @@ public class TakeAimAttackEventListener implements Listener {
 
             plugin.getProjectileTracker().onLaunch(projectile);
 
-            if (hasGravityAcceleration(projectile)) {
+            if (hasProjectileMotion(projectile)) {
                 final ProjectileSource shooter = projectile.getShooter();
                 if (shooter instanceof LivingEntity) {
                     final LivingEntity projectileSource = (LivingEntity) shooter;
@@ -121,22 +122,26 @@ public class TakeAimAttackEventListener implements Listener {
         vzs = (zt + vzt * t - zs)) / t= vzt + (zt - zs)/t
         vxs^2 + vys^2 + vzs^2 = r
 
-        So, we have a biquadratic equation that only a mother could love. Let's try to simplify the case.
+        So, we have a biquadratic equation that only a mother could love.
+        Now we should consider drag somehow which increases the degree.
+        But 4th is the highest degree that can be solved by radicals.
+        Let's try to simplify the case.
 
         Try #2
 
         Assume, we don't need to keep the momentum because we control a non-player entity anyway.
-        We have to make sure two things happen:
+        We have to make sure three things happen:
         - a projectile does not fly too fast,
-        - the projectile meets the target exactly at the time.
+        - the projectile meets the target exactly at the time,
+        - the environmental drag is considered.
 
         So, we need to calculate only Y axis:
 
         y2 = y1 + vy * t + g * t^2 / 2 =>
             vy = (y2 - g * t^2 / 2 - y1) / t
 
-        g = GRAVITY_ACCELERATION
-        t = ticksInFly (ticks) / t2s (ticks/s)
+        g = GRAVITY_ACCELERATION (m/s^2)
+        t = ticksInFly (ticks) / t2s (ticks/s) = (s)
 
         Example:
           y1 = 0
@@ -146,6 +151,11 @@ public class TakeAimAttackEventListener implements Listener {
           t = 10.0 / 20.0 = 0.5,
           vy = (0 - (- 20.0 * 0.5^2 / 2) - 0) / 0.5 =:= 20.0 / 4 =:= 5 (m/s)
 
+
+        Let's consider the environmental drag.
+
+        Sn = b1 * (1 - q^n) / (1 - q)
+        b1 = Sn * (1 - q) / (1 - q^n)
 
         Now we have to check that our target isn't too far away.
         Assuming an experimental maximum momentum and an angle of 45 grades, let's calculate a maximum distance.
@@ -157,87 +167,76 @@ public class TakeAimAttackEventListener implements Listener {
      */
     private void fixProjectileTrajectory(LivingEntity projectileSource, Projectile projectile, Player targetPlayer) {
         Location targetLocation = targetPlayer.getEyeLocation();
-        Location projectileLocation = projectile.getLocation();
+        // Normalize considering the projectile initial location.
+        targetLocation.subtract(projectile.getLocation());
 
-        double g = getGravityAcceleration(projectile);
-        double distance = targetLocation.distance(projectile.getLocation());
+        Vector initialProjectileVelocity = projectile.getVelocity();
+        customLogger.debug(String.format("Initial projectile velocity: %s", format(initialProjectileVelocity)));
 
-        double maxDistance = - Math.pow(MAX_ARROW_SPEED_PER_TICK * SERVER_TICKS_IN_SECOND, 2.0) / g;
+        // How long the targetPlayer will be enforced to fly.
+        final double ticksInFly = Math.ceil(targetLocation.length() / initialProjectileVelocity.length());
+        customLogger.debug(String.format("Ticks in fly: %.2f", ticksInFly));
 
-        if(distance > maxDistance) {
-            customLogger.warning(String.format("Can't modify projectile velocity of %s targeted at %s at a distance of %.2f. Max distance is %.2f",
-                    format(projectileSource), format(targetPlayer), distance, maxDistance));
-            return;
+        // Consider the target player is running somewhere.
+        {
+            final Vector targetVelocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
+            customLogger.debug(String.format("Projectile following the player with velocity: %s", format(targetVelocity)));
+            targetVelocity.multiply(ticksInFly);
+            targetLocation.add(targetVelocity);
         }
 
-        Vector projectileVelocity = projectile.getVelocity();
-        double ticksInFly = distance / projectileVelocity.length();
+        final ProjectileMotion motion = ProjectileMotion.getProjectileMotion(projectile);
 
-        double vx = (targetLocation.getX() - projectileLocation.getX()) / ticksInFly;
-        double vz = (targetLocation.getZ() - projectileLocation.getZ()) / ticksInFly;
+        if(motion.hasAcceleration()) {
+            final double distance = targetLocation.length();
+            final double maxDistance = -Math.pow(MAX_ARROW_SPEED_PER_TICK * SERVER_TICKS_IN_SECOND, 2.0D) / motion.getAcceleration();
 
-        double y1 = 0.0;
-        double y2 = targetLocation.getY() - projectileLocation.getY();
-        double t = ticksInFly / SERVER_TICKS_IN_SECOND;
-        double vy = ((y2 - (g * t * t / 2.0) - y1) / t) / SERVER_TICKS_IN_SECOND;
+            if (distance > maxDistance) {
+                customLogger.warning(String.format("Can't modify projectile velocity of %s targeted at %s at a distance of %.2f. Max distance is %.2f",
+                        format(projectileSource), format(targetPlayer), distance, maxDistance));
+                return;
+            }
+        }
 
-        // Consider the target player is running somewhere ...
-        Vector targetVelocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
-        vx += targetVelocity.getX();
-        vy += targetVelocity.getY();
-        vz += targetVelocity.getZ();
+        final Vector newVelocity;
+        {
+            final double vx = targetLocation.getX() / ticksInFly;
+            final double vz = targetLocation.getZ() / ticksInFly;
 
-        Vector newVelocity = new Vector(vx, vy, vz);
+            final double vy;
+
+            if (motion.hasAcceleration()) {
+                final double y1 = 0.0D;
+                final double y2 = targetLocation.getY();
+                final double t = ticksInFly / SERVER_TICKS_IN_SECOND;
+
+                vy = ((y2 - (motion.getAcceleration() * t * t / 2.0D) - y1) / t) / SERVER_TICKS_IN_SECOND;
+            } else {
+                vy = targetLocation.getY() / ticksInFly;
+            }
+
+            newVelocity = new Vector(vx, vy, vz);
+            customLogger.debug(String.format("New projectile velocity: %s", format(newVelocity)));
+        }
+
+        // Consider a drag ...
+        if(motion.hasDrag()) {
+            final double q = (1.0D - motion.getDrag());
+            final double normalizedDistanceWithDrag = (1.0D - Math.pow(q, ticksInFly)) / (1.0D - q);
+            newVelocity.multiply(ticksInFly / normalizedDistanceWithDrag);
+            customLogger.debug(String.format("Drag compensation: %.2f", (ticksInFly / normalizedDistanceWithDrag)));
+        }
+
         projectile.setVelocity(newVelocity);
 
         if(customLogger.isDebugMode()) {
             customLogger.debug(String.format("Modify projectile velocity of %s targeted at %s from %s to %s",
-                    format(projectileSource), format(targetPlayer), format(projectileVelocity), format(newVelocity)));
+                    format(projectileSource), format(targetPlayer), format(initialProjectileVelocity), format(newVelocity)));
         }
     }
 
-    /*
-        Gravity acceleration, m/s, depending on the projectile type.
 
-        https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/Projectile.html
-
-        AbstractArrow
-            Arrow
-                TippedArrow
-            SpectralArrow
-            TippedArrow
-            Trident
-        Egg
-        EnderPearl
-        Fireball
-            DragonFireball
-            LargeFireball
-            SmallFireball
-            WitherSkull
-        FishHook
-        LlamaSpit -- unknown
-        ShulkerBullet
-        Snowball
-        ThrownExpBottle
-        ThrownPotion
-            LingeringPotion
-            SplashPotion
-
-
-        https://minecraft.gamepedia.com/Entity
-     */
-    private double getGravityAcceleration(Projectile projectile) {
-        if (projectile instanceof AbstractArrow) {
-            return -20.0;
-        } else if ((projectile instanceof Egg) || (projectile instanceof EnderPearl)
-                || (projectile instanceof Snowball) || (projectile instanceof ThrownPotion)) {
-            return -12.0;
-        } else {
-            return 0;
-        }
-    }
-
-    private boolean hasGravityAcceleration(Projectile projectile) {
-        return getGravityAcceleration(projectile) < 0.0;
+    private boolean hasProjectileMotion(Projectile projectile) {
+        return ProjectileMotion.getProjectileMotion(projectile) != null;
     }
 }

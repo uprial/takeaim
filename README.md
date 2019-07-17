@@ -11,6 +11,7 @@ A Minecraft (Bukkit) plugin that improves aiming of creatures
 ## Features
 
 * Skeletons and other shooters fire projectiles into players with fantastic precision, considering eye position and predicting a movement target point based on the movement history.
+* Totally fair and natural aiming without cheats: a projectile direction is calculated only at an aiming stage without adjustments in flight.
 
 ## Commands
 

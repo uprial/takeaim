@@ -1,0 +1,97 @@
+package com.gmail.uprial.takeaim.ballistics;
+
+import org.bukkit.entity.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class ProjectileMotion {
+    private static final double epsilon = 1.0E-6D;
+
+    final private double acceleration;
+    final private double drag;
+
+    final private static Map<EntityType,ProjectileMotion> CACHE = new HashMap<>();
+
+    private ProjectileMotion(double acceleration, double drag) {
+        this.acceleration = acceleration;
+        this.drag = drag;
+    }
+
+    public double getAcceleration() {
+        return acceleration;
+    }
+
+    public double getDrag() {
+        return drag;
+    }
+
+    public boolean hasAcceleration() {
+        return acceleration < - epsilon;
+    }
+
+    public boolean hasDrag() {
+        return drag > epsilon;
+    }
+
+    public static ProjectileMotion getProjectileMotion(Projectile projectile) {
+        EntityType projectileType = projectile.getType();
+
+        ProjectileMotion motion = CACHE.get(projectileType);
+        if(motion == null) {
+            motion = getProjectileMotionWithoutCache(projectile);
+            CACHE.put(projectileType, motion);
+        }
+
+        return motion;
+    }
+    /*
+        Gravity acceleration, m/s, depending on the projectile type.
+
+        https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/Projectile.html
+
+        AbstractArrow           - Arrow
+            Arrow
+                TippedArrow
+            SpectralArrow
+            TippedArrow
+            Trident
+        Egg                     - Thrown
+        EnderPearl              - Thrown
+        Fireball                - Fireball
+            DragonFireball
+            LargeFireball
+            SmallFireball
+            WitherSkull
+        FishHook                - ???
+        LlamaSpit               - ???
+        ShulkerBullet           - ???
+        Snowball                - Thrown
+        ThrownExpBottle         - ???
+        ThrownPotion            - Thrown
+            LingeringPotion
+            SplashPotion
+
+
+                    Acceleration    Drag
+                    m/s^2           1/tick
+        Thrown      -12.0           0.01
+        Arrow       -20.0           0.01
+        Fireball    0.0             0.0
+
+
+        https://minecraft.gamepedia.com/Entity
+     */
+    private static ProjectileMotion getProjectileMotionWithoutCache(Projectile projectile) {
+        if (projectile instanceof AbstractArrow) {
+            return new ProjectileMotion(-20.0, 0.01);
+        } else if ((projectile instanceof Egg) || (projectile instanceof EnderPearl)
+                || (projectile instanceof Snowball) || (projectile instanceof ThrownPotion)) {
+            return new ProjectileMotion(-12.0, 0.01);
+        } else if (projectile instanceof Fireball) {
+            return new ProjectileMotion(0.0, 0.0);
+        } else {
+            return null;
+        }
+    }
+}
