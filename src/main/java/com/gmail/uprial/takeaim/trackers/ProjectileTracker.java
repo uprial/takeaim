@@ -85,8 +85,9 @@ public class ProjectileTracker implements Runnable {
                 }
             } else {
                 if (!task.isCancelled()) {
-                    projectiles.clear();
                     task.cancel();
+                    projectiles.clear();
+                    projectileIdIncrement.set(0);
                 }
             }
 
