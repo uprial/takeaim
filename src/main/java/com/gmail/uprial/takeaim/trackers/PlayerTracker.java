@@ -1,4 +1,4 @@
-package com.gmail.uprial.takeaim.tracker;
+package com.gmail.uprial.takeaim.trackers;
 
 import com.gmail.uprial.takeaim.TakeAim;
 import org.bukkit.Location;
@@ -11,12 +11,12 @@ import java.util.UUID;
 
 import static com.gmail.uprial.takeaim.common.Utils.SERVER_TICKS_IN_SECOND;
 
-public class PlayerTracker {
+public class PlayerTracker implements Runnable {
     private static final int INTERVAL = SERVER_TICKS_IN_SECOND / 2;
 
     private final TakeAim plugin;
 
-    private final PlayerTrackerTask task;
+    private final TrackerTask<PlayerTracker> task;
 
     private final Map<UUID, Map<Boolean, Location>> players = new HashMap<>();
     private boolean side = true;
@@ -24,7 +24,7 @@ public class PlayerTracker {
     public PlayerTracker(TakeAim plugin) {
         this.plugin = plugin;
 
-        task = new PlayerTrackerTask(this);
+        task = new TrackerTask<>(this);
         task.runTaskTimer(plugin, INTERVAL, INTERVAL);
     }
 
@@ -60,7 +60,8 @@ public class PlayerTracker {
         return null;
     }
 
-    void run() {
+    @Override
+    public void run() {
         if(plugin.getTakeAimConfig().isEnabled()){
             side = !side;
             for (Player player : plugin.getServer().getOnlinePlayers()) {

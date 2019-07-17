@@ -1,4 +1,4 @@
-package com.gmail.uprial.takeaim.tracker;
+package com.gmail.uprial.takeaim.trackers;
 
 import com.gmail.uprial.takeaim.TakeAim;
 import com.gmail.uprial.takeaim.common.CustomLogger;
@@ -8,13 +8,13 @@ import java.util.*;
 
 import static com.gmail.uprial.takeaim.common.Formatter.format;
 
-public class ProjectileTracker {
+public class ProjectileTracker implements Runnable {
     private static final int INTERVAL = 1;
 
     private final TakeAim plugin;
     private final CustomLogger customLogger;
 
-    private final ProjectileTrackerTask task;
+    private final TrackerTask<ProjectileTracker> task;
 
     private final Set<Projectile> projectiles = new HashSet<>();
 
@@ -24,7 +24,7 @@ public class ProjectileTracker {
         this.plugin = plugin;
         this.customLogger = customLogger;
 
-        task = new ProjectileTrackerTask(this);
+        task = new TrackerTask<>(this);
         onConfigChange();
     }
 
@@ -52,7 +52,8 @@ public class ProjectileTracker {
         }
     }
 
-    void run() {
+    @Override
+    public void run() {
         if(enabled) {
             for (Projectile projectile : projectiles) {
                 if (projectile.isDead() || !projectile.isValid() || projectile.isOnGround()) {

@@ -8,13 +8,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityTargetEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.util.Vector;
 
 import java.util.UUID;
 
-import static com.gmail.uprial.takeaim.TakeAimPlayerTracker.getPlayerMovementVector;
 import static com.gmail.uprial.takeaim.common.Formatter.format;
 import static com.gmail.uprial.takeaim.common.MetadataHelper.getMetadata;
 import static com.gmail.uprial.takeaim.common.MetadataHelper.setMetadata;
