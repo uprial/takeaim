@@ -5,6 +5,7 @@ import com.gmail.uprial.takeaim.common.CustomLogger;
 import org.bukkit.entity.Projectile;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.gmail.uprial.takeaim.common.Formatter.format;
 
@@ -16,7 +17,8 @@ public class ProjectileTracker implements Runnable {
 
     private final TrackerTask<ProjectileTracker> task;
 
-    private final Set<Projectile> projectiles = new HashSet<>();
+    private final Map<Projectile,Integer> projectiles = new HashMap<>();
+    private final AtomicInteger projectileIdIncrement = new AtomicInteger();
 
     private boolean enabled = false;
 
@@ -38,28 +40,37 @@ public class ProjectileTracker implements Runnable {
 
     public void onLaunch(Projectile projectile) {
         if(enabled) {
-            log(projectile, "launched");
+            int projectileId = projectileIdIncrement.incrementAndGet();
+            log(projectileId, projectile, "has been launched");
 
-            projectiles.add(projectile);
+            projectiles.put(projectile, projectileId);
         }
     }
 
     public void onHit(Projectile projectile) {
         if(enabled) {
-            log(projectile, "hit");
+            Integer projectileId = projectiles.get(projectile);
+            if(projectileId == null) {
+                log(0, projectile, "hit the target");
 
-            projectiles.remove(projectile);
+            } else {
+                log(projectileId, projectile, "hit the target");
+
+                projectiles.remove(projectile);
+            }
         }
     }
 
     @Override
     public void run() {
         if(enabled) {
-            for (Projectile projectile : projectiles) {
+            for (Map.Entry<Projectile, Integer> entry : projectiles.entrySet()) {
+                Projectile projectile = entry.getKey();
+
                 if (projectile.isDead() || !projectile.isValid() || projectile.isOnGround()) {
                     onHit(projectile);
                 } else {
-                    log(projectile, "is flying");
+                    log(entry.getValue(), projectile, "is flying");
 
                 }
             }
@@ -83,8 +94,8 @@ public class ProjectileTracker implements Runnable {
         }
     }
 
-    private void log(Projectile projectile, String action) {
-        customLogger.debug(String.format("Projectile %s %s with velocity %s",
-                format(projectile), action, format(projectile.getVelocity())));
+    private void log(int projectileId, Projectile projectile, String action) {
+        customLogger.debug(String.format("Projectile #%d %s %s with velocity %s",
+                projectileId, format(projectile), action, format(projectile.getVelocity())));
     }
 }
