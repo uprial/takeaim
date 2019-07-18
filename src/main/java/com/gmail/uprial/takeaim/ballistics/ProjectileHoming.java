@@ -166,8 +166,8 @@ public class ProjectileHoming {
         setVelocity(projectile, newVelocity);
 
         if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Modify projectile velocity of %s targeted at %s from %s to %s",
-                    format(projectileSource), format(targetPlayer), format(initialProjectileVelocity), format(newVelocity)));
+            customLogger.debug(String.format("Changed velocity of %s launched by %s targeted at %s from %s to %s",
+                    projectile.getType(), format(projectileSource), format(targetPlayer), format(initialProjectileVelocity), format(newVelocity)));
         }
     }
 
