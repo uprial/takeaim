@@ -113,7 +113,7 @@ public class ProjectileHoming {
 
         Vector initialProjectileVelocity = getVelocity(projectile);
 
-        // How long the targetPlayer will be enforced to fly.
+        // How long the projectile will be enforced to fly to the target player.
         final double ticksInFly = Math.ceil(targetLocation.length() / initialProjectileVelocity.length());
 
         // Consider the target player is running somewhere.
@@ -156,12 +156,14 @@ public class ProjectileHoming {
             newVelocity = new Vector(vx, vy, vz);
         }
 
-        // Consider a drag ...
+        // Consider a drag.
         if(motion.hasDrag()) {
             final double q = (1.0D - motion.getDrag());
             final double normalizedDistanceWithDrag = (1.0D - Math.pow(q, ticksInFly)) / (1.0D - q);
             newVelocity.multiply(ticksInFly / normalizedDistanceWithDrag);
         }
+        // Add a little speed so that the projectile doesn't attend late for sure.
+        newVelocity.multiply(1.01D);
 
         setVelocity(projectile, newVelocity);
 
