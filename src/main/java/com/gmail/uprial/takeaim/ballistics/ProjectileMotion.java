@@ -88,8 +88,8 @@ class ProjectileMotion {
         } else if ((projectile instanceof Egg) || (projectile instanceof EnderPearl)
                 || (projectile instanceof Snowball) || (projectile instanceof ThrownPotion)) {
             return new ProjectileMotion(-12.0, 0.01);
-        } else if (projectile instanceof Fireball) {
-            return new ProjectileMotion(0.0, 0.0);
+        /*} else if (projectile instanceof Fireball) {
+            return new ProjectileMotion(0.0, 0.0);*/
         } else {
             return null;
         }

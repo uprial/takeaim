@@ -3,7 +3,6 @@ package com.gmail.uprial.takeaim.ballistics;
 import com.gmail.uprial.takeaim.TakeAim;
 import com.gmail.uprial.takeaim.common.CustomLogger;
 import org.bukkit.Location;
-import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -107,11 +106,11 @@ public class ProjectileHoming {
 
      */
     public void aimProjectile(LivingEntity projectileSource, Projectile projectile, Player targetPlayer) {
-        Location targetLocation = targetPlayer.getEyeLocation();
+        final Location targetLocation = targetPlayer.getEyeLocation();
         // Normalize considering the projectile initial location.
         targetLocation.subtract(projectile.getLocation());
 
-        Vector initialProjectileVelocity = getVelocity(projectile);
+        final Vector initialProjectileVelocity = projectile.getVelocity();
 
         // How long the projectile will be enforced to fly to the target player.
         final double ticksInFly = Math.ceil(targetLocation.length() / initialProjectileVelocity.length());
@@ -165,27 +164,11 @@ public class ProjectileHoming {
         // Add a little speed so that the projectile doesn't attend late for sure.
         newVelocity.multiply(1.01D);
 
-        setVelocity(projectile, newVelocity);
+        projectile.setVelocity(newVelocity);
 
         if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Changed velocity of %s launched by %s targeted at %s from %s to %s",
-                    projectile.getType(), format(projectileSource), format(targetPlayer), format(initialProjectileVelocity), format(newVelocity)));
-        }
-    }
-
-    private static Vector getVelocity(Projectile projectile) {
-        if(projectile instanceof Fireball) {
-            return ((Fireball)projectile).getDirection().multiply(SERVER_TICKS_IN_SECOND);
-        } else {
-            return projectile.getVelocity();
-        }
-    }
-
-    private static void setVelocity(Projectile projectile, Vector newVelocity) {
-        if(projectile instanceof Fireball) {
-            ((Fireball)projectile).setDirection(newVelocity.clone().multiply( 1.0D / SERVER_TICKS_IN_SECOND));
-        } else {
-            projectile.setVelocity(newVelocity);
+            customLogger.debug(String.format("Changed velocity of %s launched by %s targeted at %s from %s to %s, ETA is %.0f ticks",
+                    projectile.getType(), format(projectileSource), format(targetPlayer), format(initialProjectileVelocity), format(newVelocity), ticksInFly));
         }
     }
 }
