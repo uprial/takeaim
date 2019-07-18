@@ -75,7 +75,7 @@ public class PlayerTracker extends AbstractTracker {
     }
 
     @Override
-    protected boolean getEnabled() {
+    protected boolean isEnabled() {
         return plugin.getTakeAimConfig().isEnabled();
     }
 }

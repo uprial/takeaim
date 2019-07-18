@@ -8,7 +8,7 @@ abstract class AbstractTracker implements Runnable {
 
     private TrackerTask<AbstractTracker> task;
 
-    private boolean enabled = false;
+    boolean enabled = false;
 
     AbstractTracker(TakeAim plugin, int interval) {
         this.plugin = plugin;
@@ -22,10 +22,10 @@ abstract class AbstractTracker implements Runnable {
     }
 
     public void onConfigChange() {
-        setEnabled(getEnabled());
+        setEnabled(isEnabled());
     }
 
-    abstract boolean getEnabled();
+    abstract boolean isEnabled();
 
     abstract void clear();
 
@@ -42,9 +42,5 @@ abstract class AbstractTracker implements Runnable {
 
             this.enabled = enabled;
         }
-    }
-
-    protected boolean getCachedEnabled() {
-        return enabled;
     }
 }

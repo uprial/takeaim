@@ -26,7 +26,7 @@ public class ProjectileTracker extends AbstractTracker {
     }
 
     public void onLaunch(Projectile projectile) {
-        if(getCachedEnabled()) {
+        if(enabled) {
             int projectileId = projectileIdIncrement.incrementAndGet();
             log(projectileId, projectile, "has been launched");
 
@@ -35,7 +35,7 @@ public class ProjectileTracker extends AbstractTracker {
     }
 
     public void onHit(Projectile projectile) {
-        if(getCachedEnabled()) {
+        if(enabled) {
             Integer projectileId = projectiles.get(projectile);
             if(projectileId == null) {
                 log(0, projectile, "hit the target");
@@ -50,7 +50,7 @@ public class ProjectileTracker extends AbstractTracker {
 
     @Override
     public void run() {
-        if(getCachedEnabled()) {
+        if(enabled) {
             List<Projectile> onHit = new ArrayList<>();
             for (Map.Entry<Projectile, Integer> entry : projectiles.entrySet()) {
                 Projectile projectile = entry.getKey();
@@ -75,7 +75,7 @@ public class ProjectileTracker extends AbstractTracker {
     }
 
     @Override
-    protected boolean getEnabled() {
+    protected boolean isEnabled() {
         return plugin.getTakeAimConfig().isEnabled() && customLogger.isDebugMode();
     }
 

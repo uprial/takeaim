@@ -5,7 +5,7 @@ import org.bukkit.entity.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ProjectileMotion {
+class ProjectileMotion {
     private static final double epsilon = 1.0E-6D;
 
     final private double acceleration;
@@ -18,23 +18,23 @@ public class ProjectileMotion {
         this.drag = drag;
     }
 
-    public double getAcceleration() {
+    double getAcceleration() {
         return acceleration;
     }
 
-    public double getDrag() {
+    double getDrag() {
         return drag;
     }
 
-    public boolean hasAcceleration() {
+    boolean hasAcceleration() {
         return acceleration < - epsilon;
     }
 
-    public boolean hasDrag() {
+    boolean hasDrag() {
         return drag > epsilon;
     }
 
-    public static ProjectileMotion getProjectileMotion(Projectile projectile) {
+    static ProjectileMotion getProjectileMotion(Projectile projectile) {
         EntityType projectileType = projectile.getType();
 
         ProjectileMotion motion = CACHE.get(projectileType);
