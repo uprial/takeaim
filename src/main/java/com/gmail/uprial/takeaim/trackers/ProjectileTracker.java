@@ -63,15 +63,19 @@ public class ProjectileTracker implements Runnable {
     @Override
     public void run() {
         if(enabled) {
+            List<Projectile> onHit = new ArrayList<>();
             for (Map.Entry<Projectile, Integer> entry : projectiles.entrySet()) {
                 Projectile projectile = entry.getKey();
 
                 if (projectile.isDead() || !projectile.isValid() || projectile.isOnGround()) {
-                    onHit(projectile);
+                    onHit.add(projectile);
                 } else {
                     log(entry.getValue(), projectile, "is flying");
 
                 }
+            }
+            for(Projectile projectile : onHit) {
+                onHit(projectile);
             }
         }
     }
