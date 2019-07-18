@@ -13,8 +13,6 @@ abstract class AbstractTracker implements Runnable {
     AbstractTracker(TakeAim plugin, int interval) {
         this.plugin = plugin;
         this.interval = interval;
-
-        onConfigChange();
     }
 
     public void stop() {

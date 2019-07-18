@@ -23,6 +23,8 @@ public class ProjectileTracker extends AbstractTracker {
 
         this.plugin = plugin;
         this.customLogger = customLogger;
+
+        onConfigChange();
     }
 
     public void onLaunch(Projectile projectile) {

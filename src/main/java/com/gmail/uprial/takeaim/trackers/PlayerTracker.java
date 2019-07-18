@@ -23,6 +23,8 @@ public class PlayerTracker extends AbstractTracker {
         super(plugin, INTERVAL);
 
         this.plugin = plugin;
+
+        onConfigChange();
     }
 
     public Vector getPlayerMovementVector(Player player) {
