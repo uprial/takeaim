@@ -11,26 +11,18 @@ import java.util.UUID;
 
 import static com.gmail.uprial.takeaim.common.Utils.SERVER_TICKS_IN_SECOND;
 
-public class PlayerTracker implements Runnable {
+public class PlayerTracker extends AbstractTracker {
     private static final int INTERVAL = SERVER_TICKS_IN_SECOND / 2;
 
     private final TakeAim plugin;
-
-    private final TrackerTask<PlayerTracker> task;
 
     private final Map<UUID, Map<Boolean, Location>> players = new HashMap<>();
     private boolean side = true;
 
     public PlayerTracker(TakeAim plugin) {
+        super(plugin, INTERVAL);
+
         this.plugin = plugin;
-
-        task = new TrackerTask<>(this);
-        task.runTaskTimer(plugin, INTERVAL, INTERVAL);
-    }
-
-    public void stop() {
-        task.cancel();
-        players.clear();
     }
 
     public Vector getPlayerMovementVector(Player player) {
@@ -62,20 +54,28 @@ public class PlayerTracker implements Runnable {
 
     @Override
     public void run() {
-        if(plugin.getTakeAimConfig().isEnabled()){
-            side = !side;
-            for (Player player : plugin.getServer().getOnlinePlayers()) {
-                UUID uuid = player.getUniqueId();
-                Map<Boolean, Location> bucket;
-                if (players.containsKey(uuid)) {
-                    bucket = players.get(uuid);
-                } else {
-                    bucket = new HashMap<>();
-                    players.put(uuid, bucket);
-                }
-                bucket.put(side, player.getLocation());
-
+        side = !side;
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            UUID uuid = player.getUniqueId();
+            Map<Boolean, Location> bucket;
+            if (players.containsKey(uuid)) {
+                bucket = players.get(uuid);
+            } else {
+                bucket = new HashMap<>();
+                players.put(uuid, bucket);
             }
+            bucket.put(side, player.getLocation());
+
         }
+    }
+
+    @Override
+    protected void clear() {
+        players.clear();
+    }
+
+    @Override
+    protected boolean getEnabled() {
+        return plugin.getTakeAimConfig().isEnabled();
     }
 }

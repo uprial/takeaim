@@ -9,36 +9,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.gmail.uprial.takeaim.common.Formatter.format;
 
-public class ProjectileTracker implements Runnable {
+public class ProjectileTracker extends AbstractTracker {
     private static final int INTERVAL = 1;
 
     private final TakeAim plugin;
     private final CustomLogger customLogger;
 
-    private TrackerTask<ProjectileTracker> task;
-
     private final Map<Projectile,Integer> projectiles = new HashMap<>();
     private final AtomicInteger projectileIdIncrement = new AtomicInteger();
 
-    private boolean enabled = false;
-
     public ProjectileTracker(TakeAim plugin, CustomLogger customLogger) {
+        super(plugin, INTERVAL);
+
         this.plugin = plugin;
         this.customLogger = customLogger;
-
-        onConfigChange();
-    }
-
-    public void stop() {
-        setEnabled(false);
-    }
-
-    public void onConfigChange() {
-        setEnabled(plugin.getTakeAimConfig().isEnabled() && customLogger.isDebugMode());
     }
 
     public void onLaunch(Projectile projectile) {
-        if(enabled) {
+        if(getCachedEnabled()) {
             int projectileId = projectileIdIncrement.incrementAndGet();
             log(projectileId, projectile, "has been launched");
 
@@ -47,7 +35,7 @@ public class ProjectileTracker implements Runnable {
     }
 
     public void onHit(Projectile projectile) {
-        if(enabled) {
+        if(getCachedEnabled()) {
             Integer projectileId = projectiles.get(projectile);
             if(projectileId == null) {
                 log(0, projectile, "hit the target");
@@ -62,7 +50,7 @@ public class ProjectileTracker implements Runnable {
 
     @Override
     public void run() {
-        if(enabled) {
+        if(getCachedEnabled()) {
             List<Projectile> onHit = new ArrayList<>();
             for (Map.Entry<Projectile, Integer> entry : projectiles.entrySet()) {
                 Projectile projectile = entry.getKey();
@@ -80,21 +68,15 @@ public class ProjectileTracker implements Runnable {
         }
     }
 
-    private void setEnabled(boolean enabled) {
-        if(this.enabled != enabled) {
-            if (enabled) {
-                task = new TrackerTask<>(this);
-                task.runTaskTimer(plugin, INTERVAL, INTERVAL);
-            } else {
-                task.cancel();
-                task = null;
+    @Override
+    protected void clear() {
+        projectiles.clear();
+        projectileIdIncrement.set(0);
+    }
 
-                projectiles.clear();
-                projectileIdIncrement.set(0);
-            }
-
-            this.enabled = enabled;
-        }
+    @Override
+    protected boolean getEnabled() {
+        return plugin.getTakeAimConfig().isEnabled() && customLogger.isDebugMode();
     }
 
     private void log(int projectileId, Projectile projectile, String action) {
