@@ -54,7 +54,7 @@ public class PlayerTracker extends AbstractTracker {
             if((current != null) && (previous != null)) {
                 final double vy;
                 if(isPlayerJumping(player) || previous.isJumping || current.isJumping) {
-                    vy = getAverageVerticalJumpVelocity(history);
+                    vy = getAverageVerticalJumpVelocity(player, history);
                 } else {
                     vy = (current.location.getY() - previous.location.getY()) / INTERVAL;
                 }
@@ -84,11 +84,19 @@ public class PlayerTracker extends AbstractTracker {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             final UUID uuid = player.getUniqueId();
             History history  = players.get(uuid);
-            if (history == null) {
-                history = new History();
-                players.put(uuid, history);
+
+            if(player.isDead()) {
+                if (history != null) {
+                    players.remove(uuid);
+                }
+            } else {
+                if (history == null) {
+                    history = new History();
+                    players.put(uuid, history);
+                }
+                history.put(index, new Checkpoint(player.getLocation(), isPlayerJumping(player)));
             }
-            history.put(index, new Checkpoint(player.getLocation(), isPlayerJumping(player)));
+            // System.out.println(String.format("Velocity: %s, Jumping: %b", format(player.getVelocity()), isPlayerJumping(player)));
         }
     }
 
@@ -120,7 +128,7 @@ public class PlayerTracker extends AbstractTracker {
         return index;
     }
 
-    private double getAverageVerticalJumpVelocity(final History history) {
+    private double getAverageVerticalJumpVelocity(final Player player, final History history) {
         final double vy;
 
         // Let's start from the next index, which is the last existing location in history.
@@ -155,10 +163,13 @@ public class PlayerTracker extends AbstractTracker {
             tmpIndex = getNext(tmpIndex);
         }
         if((firstY != null) && (lastY != null)) {
-            vy = (lastY - firstY) / (MAX_HISTORY_LENGTH * INTERVAL);
+            vy = (lastY - firstY) / (MAX_HISTORY_LENGTH * INTERVAL) + PLAYER_ACCELERATION;
+        } else if (firstY != null) {
+            vy = PLAYER_ACCELERATION;
         } else {
             vy = 0.0D;
         }
+        // System.out.println(String.format("vy: %.4f, firstY: %.4f, lastY: %.4f", vy, firstY, lastY));
 
         return vy;
     }
