@@ -5,7 +5,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class TrackerTask<T extends Runnable> extends BukkitRunnable {
     private final T tracker;
 
-    TrackerTask(T tracker) {
+    TrackerTask(final T tracker) {
         this.tracker = tracker;
     }
 

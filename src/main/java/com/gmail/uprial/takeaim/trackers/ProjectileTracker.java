@@ -20,7 +20,7 @@ public class ProjectileTracker extends AbstractTracker {
 
         private final AtomicLong ticksInFly = new AtomicLong();
 
-        ProjectileInfo(long id, Vector startPosition) {
+        ProjectileInfo(final long id, final Vector startPosition) {
             this.id = id;
             this.startPosition = startPosition;
         }
@@ -34,7 +34,7 @@ public class ProjectileTracker extends AbstractTracker {
     private final Map<Projectile,ProjectileInfo> projectiles = new HashMap<>();
     private final AtomicLong projectileIdIncrement = new AtomicLong();
 
-    public ProjectileTracker(TakeAim plugin, CustomLogger customLogger) {
+    public ProjectileTracker(final TakeAim plugin, final CustomLogger customLogger) {
         super(plugin, INTERVAL);
 
         this.plugin = plugin;
@@ -43,10 +43,10 @@ public class ProjectileTracker extends AbstractTracker {
         onConfigChange();
     }
 
-    public void onLaunch(Projectile projectile) {
+    public void onLaunch(final Projectile projectile) {
         if(enabled) {
-            long projectileId = projectileIdIncrement.incrementAndGet();
-            ProjectileInfo info = new ProjectileInfo(
+            final long projectileId = projectileIdIncrement.incrementAndGet();
+            final ProjectileInfo info = new ProjectileInfo(
                     projectileId,
                     projectile.getLocation().toVector());
             log(info, projectile, "has been launched");
@@ -55,16 +55,16 @@ public class ProjectileTracker extends AbstractTracker {
         }
     }
 
-    public void onHit(Projectile projectile) {
+    public void onHit(final Projectile projectile) {
         if(enabled) {
-            ProjectileInfo info = projectiles.get(projectile);
+            final ProjectileInfo info = projectiles.get(projectile);
             if(info == null) {
                 log(null, projectile, "hit the target");
 
             } else {
                 log(info, projectile, "hit the target");
 
-                Vector avgVelocity = projectile.getLocation().toVector()
+                final Vector avgVelocity = projectile.getLocation().toVector()
                         .subtract(info.startPosition)
                         .multiply(1.0D / Math.max(1.0D, info.ticksInFly.get()));
 
@@ -79,14 +79,14 @@ public class ProjectileTracker extends AbstractTracker {
     @Override
     public void run() {
         if(enabled) {
-            List<Projectile> onHit = new ArrayList<>();
+            final List<Projectile> onHit = new ArrayList<>();
             for (Map.Entry<Projectile, ProjectileInfo> entry : projectiles.entrySet()) {
-                Projectile projectile = entry.getKey();
+                final Projectile projectile = entry.getKey();
 
                 if (projectile.isDead() || !projectile.isValid() || projectile.isOnGround()) {
                     onHit.add(projectile);
                 } else {
-                    ProjectileInfo info = entry.getValue();
+                    final ProjectileInfo info = entry.getValue();
                     if((info.ticksInFly.get() > 0)
                         || (!projectile.getLocation().toVector().equals(info.startPosition))) {
                         info.ticksInFly.incrementAndGet();
@@ -112,7 +112,7 @@ public class ProjectileTracker extends AbstractTracker {
         return plugin.getTakeAimConfig().isEnabled() && customLogger.isDebugMode();
     }
 
-    private void log(ProjectileInfo info, Projectile projectile, String action) {
+    private void log(final ProjectileInfo info, final Projectile projectile, final String action) {
         if(info == null) {
             customLogger.debug(String.format("#? %s %s with %s, tick #?",
                     format(projectile), action, format(projectile.getVelocity())));

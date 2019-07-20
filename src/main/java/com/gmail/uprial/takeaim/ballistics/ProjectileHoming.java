@@ -17,12 +17,12 @@ public class ProjectileHoming {
 
     private static final double MAX_ARROW_SPEED_PER_TICK = 3.0D;
 
-    public ProjectileHoming(TakeAim plugin, CustomLogger customLogger) {
+    public ProjectileHoming(final TakeAim plugin, final CustomLogger customLogger) {
         this.plugin = plugin;
         this.customLogger = customLogger;
     }
 
-    public boolean hasProjectileMotion(Projectile projectile) {
+    public boolean hasProjectileMotion(final Projectile projectile) {
         return ProjectileMotion.getProjectileMotion(projectile) != null;
     }
 
@@ -105,7 +105,7 @@ public class ProjectileHoming {
         d = sin(a) * m * t = sqrt(2) * sqrt(2) * m * m / g = m^2 / g
 
      */
-    public void aimProjectile(LivingEntity projectileSource, Projectile projectile, Player targetPlayer) {
+    public void aimProjectile(final LivingEntity projectileSource, final Projectile projectile, final Player targetPlayer) {
         final Location targetLocation = targetPlayer.getEyeLocation();
         // Normalize considering the projectile initial location.
         targetLocation.subtract(projectile.getLocation());

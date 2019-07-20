@@ -26,7 +26,7 @@ public class TakeAimAttackEventListener implements Listener {
 
     private static final String MK_TARGET_PLAYER_UUID = "target-player-uuid";
 
-    public TakeAimAttackEventListener(TakeAim plugin, CustomLogger customLogger) {
+    public TakeAimAttackEventListener(final TakeAim plugin, final CustomLogger customLogger) {
         this.plugin = plugin;
         homing = new ProjectileHoming(plugin, customLogger);
     }

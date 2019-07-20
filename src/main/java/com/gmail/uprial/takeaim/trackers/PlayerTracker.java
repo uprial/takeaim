@@ -20,7 +20,7 @@ public class PlayerTracker extends AbstractTracker {
         final private Location location;
         final private Boolean isJumping;
 
-        Checkpoint(Location location, Boolean isJumping) {
+        Checkpoint(final Location location, final Boolean isJumping) {
             this.location = location;
             this.isJumping = isJumping;
         }
@@ -37,7 +37,7 @@ public class PlayerTracker extends AbstractTracker {
     private final Map<UUID, History> players = new HashMap<>();
     private int index = 0;
 
-    public PlayerTracker(TakeAim plugin) {
+    public PlayerTracker(final TakeAim plugin) {
         super(plugin, INTERVAL);
 
         this.plugin = plugin;
@@ -45,7 +45,7 @@ public class PlayerTracker extends AbstractTracker {
         onConfigChange();
     }
 
-    public Vector getPlayerMovementVector(Player player) {
+    public Vector getPlayerMovementVector(final Player player) {
         final UUID uuid = player.getUniqueId();
         final History history = players.get(uuid);
         if(history != null) {
@@ -68,7 +68,7 @@ public class PlayerTracker extends AbstractTracker {
         return new Vector(0.0, 0.0, 0.0);
     }
 
-    public Player getOnlinePlayerByUUID(UUID uuid) {
+    public Player getOnlinePlayerByUUID(final UUID uuid) {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             if (player.getUniqueId().equals(uuid)) {
                 return player;
@@ -120,7 +120,7 @@ public class PlayerTracker extends AbstractTracker {
         return index;
     }
 
-    private double getAverageVerticalJumpVelocity(History history) {
+    private double getAverageVerticalJumpVelocity(final History history) {
         final double vy;
 
         // Let's start from the next index, which is the last existing location in history.
@@ -169,7 +169,7 @@ public class PlayerTracker extends AbstractTracker {
             - the player is not on the ladder
             - the player is not flying
      */
-    private boolean isPlayerJumping(Player player) {
+    private boolean isPlayerJumping(final Player player) {
         return ((!player.isFlying())
                 && (!player.getLocation().getBlock().getType().equals(Material.LADDER))
                 && (Math.abs(player.getVelocity().getY() - PLAYER_ACCELERATION) > epsilon));

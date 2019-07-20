@@ -15,7 +15,7 @@ public class ProjectileMotion {
 
     final private static Map<EntityType,ProjectileMotion> CACHE = new HashMap<>();
 
-    private ProjectileMotion(double acceleration, double drag) {
+    private ProjectileMotion(final double acceleration, final double drag) {
         this.acceleration = acceleration;
         this.drag = drag;
     }
@@ -36,8 +36,8 @@ public class ProjectileMotion {
         return drag > epsilon;
     }
 
-    static ProjectileMotion getProjectileMotion(Projectile projectile) {
-        EntityType projectileType = projectile.getType();
+    static ProjectileMotion getProjectileMotion(final Projectile projectile) {
+        final EntityType projectileType = projectile.getType();
 
         ProjectileMotion motion = CACHE.get(projectileType);
         if(motion == null) {
@@ -84,7 +84,7 @@ public class ProjectileMotion {
 
         https://minecraft.gamepedia.com/Entity
      */
-    private static ProjectileMotion getProjectileMotionWithoutCache(Projectile projectile) {
+    private static ProjectileMotion getProjectileMotionWithoutCache(final Projectile projectile) {
         if (projectile instanceof AbstractArrow) {
             return new ProjectileMotion(-20.0, 0.01);
         } else if ((projectile instanceof Egg) || (projectile instanceof EnderPearl)
