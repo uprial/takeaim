@@ -162,10 +162,14 @@ public class PlayerTracker extends AbstractTracker {
             }
             tmpIndex = getNext(tmpIndex);
         }
+
+        // We have two different extremums, project the next move.
         if((firstY != null) && (lastY != null)) {
             vy = (lastY - firstY) / (MAX_HISTORY_LENGTH * INTERVAL) + PLAYER_ACCELERATION;
+        // We have only one extremum, we're jumping for sure but have no idea how high.
         } else if (firstY != null) {
             vy = PLAYER_ACCELERATION;
+        // Something goes wrong, and we don't have extremums. Let's not predict the vertical move.
         } else {
             vy = 0.0D;
         }
@@ -176,9 +180,9 @@ public class PlayerTracker extends AbstractTracker {
 
     /*
         An idea of how to detect a jump:
-            - a player vertical velocity does not equal to the default player vertical velocity
-            - the player is not on the ladder
             - the player is not flying
+            - the player is not on the ladder
+            - a player vertical velocity does not equal to the default player vertical velocity
      */
     private boolean isPlayerJumping(final Player player) {
         return ((!player.isFlying())
