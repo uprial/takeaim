@@ -26,7 +26,7 @@ public class PlayerTracker extends AbstractTracker {
         }
     }
 
-    private class History extends HashMap<Integer, Checkpoint> {
+    private class TimerWheel extends HashMap<Integer, Checkpoint> {
     }
 
     private static final int INTERVAL = SERVER_TICKS_IN_SECOND / 4;
@@ -34,7 +34,7 @@ public class PlayerTracker extends AbstractTracker {
 
     private final TakeAim plugin;
 
-    private final Map<UUID, History> players = new HashMap<>();
+    private final Map<UUID, TimerWheel> players = new HashMap<>();
     private int index = 0;
 
     public PlayerTracker(final TakeAim plugin) {
@@ -47,14 +47,14 @@ public class PlayerTracker extends AbstractTracker {
 
     public Vector getPlayerMovementVector(final Player player) {
         final UUID uuid = player.getUniqueId();
-        final History history = players.get(uuid);
-        if(history != null) {
-            final Checkpoint current = history.get(index);
-            final Checkpoint previous = history.get(getPrev(index));
+        final TimerWheel wheel = players.get(uuid);
+        if(wheel != null) {
+            final Checkpoint current = wheel.get(index);
+            final Checkpoint previous = wheel.get(getPrev(index));
             if((current != null) && (previous != null)) {
                 final double vy;
                 if(isPlayerJumping(player) || previous.isJumping || current.isJumping) {
-                    vy = getAverageVerticalJumpVelocity(player, history);
+                    vy = getAverageVerticalJumpVelocity(player, wheel);
                 } else {
                     vy = (current.location.getY() - previous.location.getY()) / INTERVAL;
                 }
@@ -83,18 +83,18 @@ public class PlayerTracker extends AbstractTracker {
         index = getNext(index);
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             final UUID uuid = player.getUniqueId();
-            History history  = players.get(uuid);
+            TimerWheel wheel = players.get(uuid);
 
             if(player.isDead()) {
-                if (history != null) {
+                if (wheel != null) {
                     players.remove(uuid);
                 }
             } else {
-                if (history == null) {
-                    history = new History();
-                    players.put(uuid, history);
+                if (wheel == null) {
+                    wheel = new TimerWheel();
+                    players.put(uuid, wheel);
                 }
-                history.put(index, new Checkpoint(player.getLocation(), isPlayerJumping(player)));
+                wheel.put(index, new Checkpoint(player.getLocation(), isPlayerJumping(player)));
             }
             // System.out.println(String.format("Velocity: %s, Jumping: %b", format(player.getVelocity()), isPlayerJumping(player)));
         }
@@ -128,24 +128,24 @@ public class PlayerTracker extends AbstractTracker {
         return index;
     }
 
-    private double getAverageVerticalJumpVelocity(final Player player, final History history) {
+    private double getAverageVerticalJumpVelocity(final Player player, final TimerWheel wheel) {
         final double vy;
 
-        // Let's start from the next index, which is the last existing location in history.
+        // Let's start from the next index, which is the last existing record in timerWheel.
         Double firstY = null;
         Double lastY = null;
 
         int tmpIndex = getNext(index);
         Double y1 = null;
         Double y2 = null;
-        // Fetch all the history in a loop. The last index in the loop will be the current global index.
+        // Fetch all the timerWheel in a loop. The last index in the loop will be the current global index.
         for(int i = 0; i < MAX_HISTORY_LENGTH - 1; i++) {
-            final Checkpoint checkpoint = history.get(tmpIndex);
-            // If the player has just joined the game, it won't have all the history.
+            final Checkpoint checkpoint = wheel.get(tmpIndex);
+            // If the player has just joined the game, it won't have all the records in the timerWheel.
             if(checkpoint != null) {
                 // There is a sequence of 3 coordinates: y2 -> y1 -> y0.
                 double y0 = checkpoint.location.getY();
-                // Check that we have enough history.
+                // Check that we have enough records in the timerWheel.
                 if(y2 != null) {
                     // Let's find an extremum where y1 is lower than both y2 and y0.
                     if((y2 > y1) && (y1 > y0)) {
