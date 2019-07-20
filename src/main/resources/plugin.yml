@@ -1,6 +1,6 @@
 name: TakeAim
 main: com.gmail.uprial.takeaim.TakeAim
-version: 0.3.1
+version: 0.3.2
 commands:
    takeaim:
       description: Reload TakeAim config
