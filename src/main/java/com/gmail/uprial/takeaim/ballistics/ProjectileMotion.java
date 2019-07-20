@@ -5,7 +5,9 @@ import org.bukkit.entity.*;
 import java.util.HashMap;
 import java.util.Map;
 
-class ProjectileMotion {
+public class ProjectileMotion {
+    public static final double PLAYER_ACCELERATION = -0.08;
+
     private static final double epsilon = 1.0E-6D;
 
     final private double acceleration;
