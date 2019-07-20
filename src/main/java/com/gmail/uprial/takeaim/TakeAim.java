@@ -55,6 +55,7 @@ public final class TakeAim extends JavaPlugin {
     void reloadConfig(CustomLogger userLogger) {
         reloadConfig();
         takeAimConfig = loadConfig(getConfig(), userLogger, consoleLogger);
+        playerTracker.onConfigChange();
         projectileTracker.onConfigChange();
     }
 
