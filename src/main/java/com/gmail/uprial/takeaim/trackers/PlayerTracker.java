@@ -148,7 +148,7 @@ public class PlayerTracker extends AbstractTracker {
                 // Check that we have enough records in the timerWheel.
                 if(y2 != null) {
                     // Let's find an extremum where y1 is lower than both y2 and y0.
-                    if((y2 > y1) && (y1 > y0)) {
+                    if((y2 > y1) && (y0 > y1)) {
                         if(firstY == null) {
                             firstY = y1;
                         } else {
