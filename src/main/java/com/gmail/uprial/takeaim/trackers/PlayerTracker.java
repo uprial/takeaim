@@ -1,6 +1,7 @@
 package com.gmail.uprial.takeaim.trackers;
 
 import com.gmail.uprial.takeaim.TakeAim;
+import com.gmail.uprial.takeaim.common.CustomLogger;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.gmail.uprial.takeaim.ballistics.ProjectileMotion.PLAYER_ACCELERATION;
+import static com.gmail.uprial.takeaim.common.Formatter.format;
 import static com.gmail.uprial.takeaim.common.Utils.SERVER_TICKS_IN_SECOND;
 
 public class PlayerTracker extends AbstractTracker {
@@ -33,14 +35,16 @@ public class PlayerTracker extends AbstractTracker {
     private static final int MAX_HISTORY_LENGTH = 5 * SERVER_TICKS_IN_SECOND / INTERVAL;
 
     private final TakeAim plugin;
+    private final CustomLogger customLogger;
 
     private final Map<UUID, TimerWheel> players = new HashMap<>();
     private int index = 0;
 
-    public PlayerTracker(final TakeAim plugin) {
+    public PlayerTracker(final TakeAim plugin, final CustomLogger customLogger) {
         super(plugin, INTERVAL);
 
         this.plugin = plugin;
+        this.customLogger = customLogger;
 
         onConfigChange();
     }
@@ -54,7 +58,7 @@ public class PlayerTracker extends AbstractTracker {
             if((current != null) && (previous != null)) {
                 final double vy;
                 if(isPlayerJumping(player) || previous.isJumping || current.isJumping) {
-                    vy = getAverageVerticalJumpVelocity(wheel);
+                    vy = getAverageVerticalJumpVelocity(player, wheel);
                 } else {
                     vy = (current.location.getY() - previous.location.getY()) / INTERVAL;
                 }
@@ -128,7 +132,7 @@ public class PlayerTracker extends AbstractTracker {
         return index;
     }
 
-    private double getAverageVerticalJumpVelocity(final TimerWheel wheel) {
+    private double getAverageVerticalJumpVelocity(final Player player, final TimerWheel wheel) {
         final double vy;
 
         // Let's start from the next index, which is the last existing record in timerWheel.
@@ -144,7 +148,7 @@ public class PlayerTracker extends AbstractTracker {
             // If the player has just joined the game, it won't have all the records in the timerWheel.
             if(checkpoint != null) {
                 // There is a sequence of 3 coordinates: y2 -> y1 -> y0.
-                double y0 = checkpoint.location.getY();
+                final double y0 = checkpoint.location.getY();
                 // Check that we have enough records in the timerWheel.
                 if(y2 != null) {
                     // Let's find an extremum where y1 is lower than both y2 and y0.
@@ -166,12 +170,24 @@ public class PlayerTracker extends AbstractTracker {
         // We have two different extremums, project the next move.
         if((firstY != null) && (lastY != null)) {
             vy = (lastY - firstY) / (MAX_HISTORY_LENGTH * INTERVAL) + PLAYER_ACCELERATION;
+            if(customLogger.isDebugMode()) {
+                customLogger.debug(String.format("A player %s is jumping, two vertical extremums are %.2f and %.2f",
+                        format(player), firstY, lastY));
+            }
         // We have only one extremum, we're jumping for sure but have no idea how high.
         } else if (firstY != null) {
             vy = PLAYER_ACCELERATION;
+            if(customLogger.isDebugMode()) {
+                customLogger.debug(String.format("A player %s is jumping, but only one vertical extremum has found: %.2f",
+                        format(player), firstY));
+            }
         // Something goes wrong, and we don't have extremums. Let's not predict the vertical move.
         } else {
             vy = 0.0D;
+            if(customLogger.isDebugMode()) {
+                customLogger.debug(String.format("A player %s it not jumping",
+                        format(player)));
+            }
         }
         // System.out.println(String.format("vy: %.4f, firstY: %.4f, lastY: %.4f", vy, firstY, lastY));
 
