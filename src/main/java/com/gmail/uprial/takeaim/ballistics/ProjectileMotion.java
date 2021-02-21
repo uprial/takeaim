@@ -50,26 +50,29 @@ public class ProjectileMotion {
     /*
         Gravity acceleration, m/s, depending on the projectile type.
 
-        https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/Projectile.html
+        https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/Projectile.html (version 1.16.5)
 
         AbstractArrow           - Arrow
             Arrow
                 TippedArrow
             SpectralArrow
             TippedArrow
-            Trident
-        Egg                     - Thrown
-        EnderPearl              - Thrown
+            Trident (WARNING: also extends ThrowableProjectile)
+        ThrowableProjectile     - Thrown
+            Egg
+            EnderPearl
+            Snowball
+            ThrownExpBottle (WARNING: excluded from getProjectileMotionWithoutCache() because nobody throws it into a player)
         Fireball                - Fireball
             DragonFireball
-            LargeFireball
-            SmallFireball
+            SizedFireball
+                LargeFireball
+                SmallFireball
             WitherSkull
+        Firework                - ???
         FishHook                - ???
         LlamaSpit               - ???
         ShulkerBullet           - ???
-        Snowball                - Thrown
-        ThrownExpBottle         - ???
         ThrownPotion            - Thrown
             LingeringPotion
             SplashPotion
