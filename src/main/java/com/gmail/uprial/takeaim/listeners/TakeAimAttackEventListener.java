@@ -36,16 +36,18 @@ public class TakeAimAttackEventListener implements Listener {
     public void onEntityTargetEvent(EntityTargetEvent event) {
         if ((plugin.getTakeAimConfig().isEnabled()) && (!event.isCancelled())) {
             final Entity source = event.getEntity();
-            // Performance improvement: ProjectileSource instead of LivingEntity
-            if (source instanceof ProjectileSource) {
-                final LivingEntity projectileSource = (LivingEntity) source;
-                final Entity target = event.getTarget();
-                if (target instanceof Player) {
-                    final Player targetPlayer = (Player) target;
-                    setMetadata(plugin, projectileSource, MK_TARGET_PLAYER_UUID, targetPlayer.getUniqueId());
-                } else {
-                    // Clear the target
-                    setMetadata(plugin, projectileSource, MK_TARGET_PLAYER_UUID, null);
+            if (plugin.getTakeAimConfig().isWorldEnabled(source.getWorld().getName())) {
+                // Performance improvement: ProjectileSource instead of LivingEntity
+                if(source instanceof ProjectileSource) {
+                    final LivingEntity projectileSource = (LivingEntity) source;
+                    final Entity target = event.getTarget();
+                    if (target instanceof Player) {
+                        final Player targetPlayer = (Player) target;
+                        setMetadata(plugin, projectileSource, MK_TARGET_PLAYER_UUID, targetPlayer.getUniqueId());
+                    } else {
+                        // Clear the target
+                        setMetadata(plugin, projectileSource, MK_TARGET_PLAYER_UUID, null);
+                    }
                 }
             }
         }
@@ -57,17 +59,19 @@ public class TakeAimAttackEventListener implements Listener {
         if ((plugin.getTakeAimConfig().isEnabled()) && (!event.isCancelled())) {
             final Projectile projectile = event.getEntity();
 
-            plugin.getProjectileTracker().onLaunch(projectile);
+            if(plugin.getTakeAimConfig().isWorldEnabled(projectile.getWorld().getName())) {
+                plugin.getProjectileTracker().onLaunch(projectile);
 
-            if (homing.hasProjectileMotion(projectile)) {
-                final ProjectileSource shooter = projectile.getShooter();
-                if (shooter instanceof LivingEntity) {
-                    final LivingEntity projectileSource = (LivingEntity) shooter;
-                    final UUID targetPlayerUUID = getMetadata(projectileSource, MK_TARGET_PLAYER_UUID);
-                    if (targetPlayerUUID != null) {
-                        final Player targetPlayer = plugin.getPlayerTracker().getOnlinePlayerByUUID(targetPlayerUUID);
-                        if (targetPlayer != null) {
-                            homing.aimProjectile(projectileSource, projectile, targetPlayer);
+                if (homing.hasProjectileMotion(projectile)) {
+                    final ProjectileSource shooter = projectile.getShooter();
+                    if (shooter instanceof LivingEntity) {
+                        final LivingEntity projectileSource = (LivingEntity) shooter;
+                        final UUID targetPlayerUUID = getMetadata(projectileSource, MK_TARGET_PLAYER_UUID);
+                        if (targetPlayerUUID != null) {
+                            final Player targetPlayer = plugin.getPlayerTracker().getOnlinePlayerByUUID(targetPlayerUUID);
+                            if (targetPlayer != null) {
+                                homing.aimProjectile(projectileSource, projectile, targetPlayer);
+                            }
                         }
                     }
                 }
@@ -79,7 +83,10 @@ public class TakeAimAttackEventListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onProjectileHitEvent(ProjectileHitEvent event) {
         if ((plugin.getTakeAimConfig().isEnabled())) {
-            plugin.getProjectileTracker().onHit(event.getEntity());
+            final Projectile projectile = event.getEntity();
+            if(plugin.getTakeAimConfig().isWorldEnabled(projectile.getWorld().getName())) {
+                plugin.getProjectileTracker().onHit(projectile);
+            }
         }
     }
 }

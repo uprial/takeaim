@@ -16,3 +16,11 @@ debug: false
 # Enable main features. Possible values: true | false (default = false)
 #
 enabled: true
+
+#
+# worlds:  ### A list of worlds.
+#          ### By default, entities of all worlds will be processed.
+#   - <world1>
+#     ...
+#   - <worldN>
+#

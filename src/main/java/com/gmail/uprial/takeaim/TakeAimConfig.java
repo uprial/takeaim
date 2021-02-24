@@ -5,11 +5,17 @@ import com.gmail.uprial.takeaim.config.ConfigReaderSimple;
 import com.gmail.uprial.takeaim.config.InvalidConfigException;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.util.Set;
+
+import static com.gmail.uprial.takeaim.config.ConfigReaderEnums.getStringSet;
+
 public final class TakeAimConfig {
     private final boolean enabled;
+    private final Set<String> worlds;
 
-    private TakeAimConfig(boolean enabled) {
+    private TakeAimConfig(boolean enabled, Set<String> worlds) {
         this.enabled = enabled;
+        this.worlds = worlds;
     }
 
     static boolean isDebugMode(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
@@ -20,10 +26,19 @@ public final class TakeAimConfig {
         return enabled;
     }
 
-    static TakeAimConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
-        boolean enabled = ConfigReaderSimple.getBoolean(config, customLogger, "enabled", "'enabled' flag", true);
+    public boolean isWorldEnabled(String world) {
+        if (worlds == null) {
+            return true;
+        } else {
+            return worlds.contains(world);
+        }
+    }
 
-        return new TakeAimConfig(enabled);
+    static TakeAimConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
+        final boolean enabled = ConfigReaderSimple.getBoolean(config, customLogger, "enabled", "'enabled' flag", true);
+        final Set<String> worlds = getStringSet(config, customLogger, "worlds", "worlds");
+
+        return new TakeAimConfig(enabled, worlds);
     }
 
     public String toString() {
