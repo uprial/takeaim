@@ -80,23 +80,41 @@ public class ProjectileMotion {
             SplashPotion
 
 
+        https://minecraft.gamepedia.com/Entity, section "Motion of entities"
+        * Explosive projectiles are not affected by gravity but instead get acceleration from getting damaged.
+        * Dangerous wither skulls have drag force of 0.27.
+
                     Acceleration    Drag
                     m/s^2           1/tick
         Thrown      -12.0           0.01
         Arrow       -20.0           0.01
-        Fireball    0.0             0.0
+        Fireball    0.0             0.05
+        WitherSkull 0.0             0.27
 
-
-        https://minecraft.gamepedia.com/Entity
      */
     private static ProjectileMotion getProjectileMotionWithoutCache(final Projectile projectile) {
-        if (projectile instanceof AbstractArrow) {
+        /*
+            Compare a projectile class name for backward compatibility with 1.10.
+            https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/AbstractArrow.html
+
+            For 1.16 the condition below would be much simpler:
+            if ((projectile instanceof AbstractArrow)){
+         */
+        if(projectile.getClass().getName().endsWith("Arrow")
+            || projectile.getClass().getName().endsWith("Trident")) {
             return new ProjectileMotion(-20.0, 0.01);
-        } else if ((projectile instanceof Egg) || (projectile instanceof EnderPearl)
-                || (projectile instanceof Snowball) || (projectile instanceof ThrownPotion)) {
+        } else if ((projectile instanceof Egg) || (projectile instanceof Snowball)
+                || (projectile instanceof EnderPearl) || (projectile instanceof ThrownPotion)) {
             return new ProjectileMotion(-12.0, 0.01);
-        /*} else if (projectile instanceof Fireball) {
-            return new ProjectileMotion(0.0, 0.0);*/
+        /*
+            Fireballs fly straight and do not take setVelocity(...) well.
+            https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/Fireball.html
+
+        } else if (projectile instanceof WitherSkull) {
+            return new ProjectileMotion(0.0, 0.27);
+        } else if (projectile instanceof Fireball) {
+            return new ProjectileMotion(0.0, 0.05);
+            */
         } else {
             return null;
         }
