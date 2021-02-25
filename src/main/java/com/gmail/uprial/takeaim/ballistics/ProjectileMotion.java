@@ -39,8 +39,10 @@ public class ProjectileMotion {
     static ProjectileMotion getProjectileMotion(final Projectile projectile) {
         final EntityType projectileType = projectile.getType();
 
-        ProjectileMotion motion = CACHE.get(projectileType);
-        if(motion == null) {
+        final ProjectileMotion motion;
+        if(CACHE.containsKey(projectileType)) {
+            motion = CACHE.get(projectileType);
+        } else {
             motion = getProjectileMotionWithoutCache(projectile);
             CACHE.put(projectileType, motion);
         }

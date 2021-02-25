@@ -1,0 +1,3 @@
+# Improvements
+* Improved aiming performance
+
