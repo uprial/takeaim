@@ -68,8 +68,8 @@ public class ProjectileTracker extends AbstractTracker {
                         .subtract(info.startPosition)
                         .multiply(1.0D / Math.max(1.0D, info.ticksInFly.get()));
 
-                customLogger.debug(String.format("#%d %s average velocity: %s",
-                        info.id, format(projectile), format(avgVelocity)));
+                customLogger.debug(String.format("#%d %s average velocity was %s in %d ticks",
+                        info.id, format(projectile), format(avgVelocity), info.ticksInFly.get()));
 
                 projectiles.remove(projectile);
             }
