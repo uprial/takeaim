@@ -3,6 +3,7 @@ package com.gmail.uprial.takeaim.ballistics;
 import com.gmail.uprial.takeaim.TakeAim;
 import com.gmail.uprial.takeaim.common.CustomLogger;
 import org.bukkit.Location;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -106,6 +107,16 @@ public class ProjectileHoming {
 
      */
     public void aimProjectile(final LivingEntity projectileSource, final Projectile projectile, final Player targetPlayer) {
+        if (projectile instanceof Fireball) {
+            /*
+                Fireballs fly straight and do not take setVelocity(...) well.
+                https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/Fireball.html
+                The Fireballs will be processed differently, see ProjectileHoming for more details.
+            */
+            aimFireball(projectileSource, (Fireball)projectile, targetPlayer);
+            return;
+        }
+
         final Location targetLocation = targetPlayer.getEyeLocation();
         // Normalize considering the projectile initial location.
         targetLocation.subtract(projectile.getLocation());
@@ -170,5 +181,10 @@ public class ProjectileHoming {
             customLogger.debug(String.format("Changed velocity of %s launched by %s targeted at %s from %s to %s, ETA is %.0f ticks",
                     projectile.getType(), format(projectileSource), format(targetPlayer), format(initialProjectileVelocity), format(newVelocity), ticksInFly));
         }
+    }
+
+    // TBD
+    private void aimFireball(final LivingEntity projectileSource, final Fireball fireball, final Player targetPlayer) {
+        return;
     }
 }
