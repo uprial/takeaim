@@ -57,9 +57,9 @@ public class ProjectileHoming {
         vxs^2 + vys^2 + vzs^2 = r
 
         c) Then
-        vxs = (xt + vxt * t - xs) /  t = vxt + (xt - xs)/t
-        vys = yt + vyt * t - (g * t^2 / 2 + ys) / t
-        vzs = (zt + vzt * t - zs)) / t= vzt + (zt - zs)/t
+        vxs = (xt + vxt * t - xs) / t = vxt + (xt - xs) / t
+        vys = (yt + vyt * t - ys) / t - (g * t^2 / 2) / t = vyt + (yt - ys) / t - g * t / 2
+        vzs = (zt + vzt * t - zs) / t = vzt + (zt - zs) / t
         vxs^2 + vys^2 + vzs^2 = r
 
         So, we have a biquadratic equation that only a mother could love.
