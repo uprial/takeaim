@@ -32,6 +32,7 @@ I will be happy to add some features or fix bugs. My mail: uprial@gmail.com.
 * [Project on GitHub](https://github.com/uprial/takeaim/)
 * [Project on Bukkit Dev](http://dev.bukkit.org/bukkit-plugins/takeaim/)
 * [Project on Spigot](https://www.spigotmc.org/resources/takeaim.68713/)
+* [TODO list](TODO.md)
 
 ## Related projects
 * CustomNukes: [Bukkit Dev](http://dev.bukkit.org/bukkit-plugins/customnukes/), [GitHub](https://github.com/uprial/customnukes), [Spigot](https://www.spigotmc.org/resources/customnukes.68710/)
