@@ -31,7 +31,10 @@ public class PlayerTracker extends AbstractTracker {
     private class TimerWheel extends HashMap<Integer, Checkpoint> {
     }
 
+    // A shorter interval is used to extrapolate the next move
     private static final int INTERVAL = SERVER_TICKS_IN_SECOND / 4;
+    // A longer interval is used to analyze jump history,
+    // must be at least two to proper timer wheel function
     private static final int MAX_HISTORY_LENGTH = 5 * SERVER_TICKS_IN_SECOND / INTERVAL;
 
     private final TakeAim plugin;
