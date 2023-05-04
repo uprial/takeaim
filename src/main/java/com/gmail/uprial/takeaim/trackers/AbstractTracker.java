@@ -1,16 +1,16 @@
 package com.gmail.uprial.takeaim.trackers;
 
-import com.gmail.uprial.takeaim.TakeAim;
+import org.bukkit.plugin.java.JavaPlugin;
 
 abstract class AbstractTracker implements Runnable {
-    private final TakeAim plugin;
+    private final JavaPlugin plugin;
     private final int interval;
 
     private TrackerTask<AbstractTracker> task;
 
     boolean enabled = false;
 
-    AbstractTracker(final TakeAim plugin, final int interval) {
+    AbstractTracker(final JavaPlugin plugin, final int interval) {
         this.plugin = plugin;
         this.interval = interval;
     }
