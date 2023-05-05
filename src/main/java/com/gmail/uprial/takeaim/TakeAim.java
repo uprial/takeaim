@@ -79,7 +79,7 @@ public final class TakeAim extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(configFile);
     }
 
-    private static TakeAimConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
+    static TakeAimConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
         return loadConfig(config, customLogger, null);
     }
 

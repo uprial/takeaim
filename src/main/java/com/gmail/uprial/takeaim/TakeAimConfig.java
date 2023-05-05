@@ -34,7 +34,7 @@ public final class TakeAimConfig {
         }
     }
 
-    static TakeAimConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
+    public static TakeAimConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
         final boolean enabled = ConfigReaderSimple.getBoolean(config, customLogger, "enabled", "'enabled' flag", true);
         final Set<String> worlds = getStringSet(config, customLogger, "worlds", "worlds");
 
@@ -42,6 +42,7 @@ public final class TakeAimConfig {
     }
 
     public String toString() {
-        return String.format("enabled: %b", enabled);
+        return String.format("enabled: %b, worlds: %s",
+                enabled, worlds);
     }
 }
