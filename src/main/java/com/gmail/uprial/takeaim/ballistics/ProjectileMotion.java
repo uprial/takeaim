@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ProjectileMotion {
-    public static final double PLAYER_ACCELERATION = -0.08;
+    public static final double DEFAULT_PLAYER_ACCELERATION = -0.0784;
 
     private static final double epsilon = 1.0E-6D;
 
