@@ -47,13 +47,17 @@ public class PlayerTrackerTest extends TestConfigBase {
                 Arrays.asList(1.0, 1.5, 2.0, 1.2, 1.0, 1.3, 1.8, 1.1)), 0.0001D);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void testGetAverageVerticalJumpVelocity_UpWithNull() {
-        //noinspection ConstantConditions
         assertEquals(+0.0133, PlayerTracker.getAverageVerticalJumpVelocity(
                 Arrays.asList(1.0, 1.5, 2.0, null, 1.0, 1.3, 2.2, 1.1)), 0.0001D);
-        //noinspection ConstantConditions
         assertEquals(+0.0133, PlayerTracker.getAverageVerticalJumpVelocity(
                 Arrays.asList(1.0, 1.5, 2.0, null, 1.0, null, 2.2, 1.1)), 0.0001D);
+        assertEquals(+0.0133, PlayerTracker.getAverageVerticalJumpVelocity(
+                Arrays.asList(null, 1.5, 2.0, null, 1.0, null, 2.2, 1.1)), 0.0001D);
+
+        assertNull(PlayerTracker.getAverageVerticalJumpVelocity(
+                Arrays.asList(null, null, 2.0, null, 1.0, null, 2.2, 1.1)));
     }
 }
