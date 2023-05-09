@@ -42,7 +42,7 @@ public class TakeAimConfigTest extends TestConfigBase {
     @Test
     public void testEmptyWorlds() throws Exception {
         assertEquals(
-                "enabled: true, worlds: null",
+                "enabled: true, worlds: null, exclude-biomes: null",
                 loadConfig("enabled: true", "").toString());
     }
 
@@ -57,11 +57,23 @@ public class TakeAimConfigTest extends TestConfigBase {
     }
 
     @Test
+    public void testExcludeBiomesListHasDuplicates() throws Exception {
+        e.expect(InvalidConfigException.class);
+        e.expectMessage("org.bukkit.block.Biome 'BIRCH_FOREST' in exclude-biomes is not unique");
+        loadConfig("enabled: true",
+                "exclude-biomes:",
+                " - BIRCH_FOREST",
+                " - BIRCH_FOREST");
+    }
+
+    @Test
     public void testNormalConfig() throws Exception {
         assertEquals(
-                "enabled: true, worlds: [world]",
+                "enabled: true, worlds: [world], exclude-biomes: [BIRCH_FOREST]",
                 loadConfig("enabled: true",
                         "worlds:",
-                        " - world").toString());
+                        " - world",
+                        "exclude-biomes:",
+                        " - BIRCH_FOREST").toString());
     }
 }

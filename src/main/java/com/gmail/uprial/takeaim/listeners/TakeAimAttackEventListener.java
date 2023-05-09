@@ -36,7 +36,8 @@ public class TakeAimAttackEventListener implements Listener {
     public void onEntityTargetEvent(EntityTargetEvent event) {
         if ((plugin.getTakeAimConfig().isEnabled()) && (!event.isCancelled())) {
             final Entity source = event.getEntity();
-            if (plugin.getTakeAimConfig().isWorldEnabled(source.getWorld().getName())) {
+            if (plugin.getTakeAimConfig().isWorldEnabled(source.getWorld().getName())
+                    && plugin.getTakeAimConfig().isBiomeEnabled(source.getLocation().getBlock().getBiome())) {
                 // Performance improvement: ProjectileSource instead of LivingEntity
                 if(source instanceof ProjectileSource) {
                     final LivingEntity projectileSource = (LivingEntity) source;

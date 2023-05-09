@@ -24,3 +24,14 @@ enabled: true
 #     ...
 #   - <worldN>
 #
+
+#
+# exclude-biomes:  ### A list of biomes, where the plugin doesn't work.
+#                  ### List of all possible values:
+#                  ### https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/Biome.html
+#                  ###
+#                  ### By default, entities of all biomes will be processed.
+#   - <biome1>
+#     ...
+#   - <biomeN>
+#
