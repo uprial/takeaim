@@ -66,7 +66,7 @@ public class PlayerTracker extends AbstractTracker {
             if((current != null) && (previous != null)) {
                 final double vy;
                 if(isPlayerJumping(player) || previous.isJumping || current.isJumping) {
-                    final Double jumpVy = getAverageVerticalJumpVelocity(player, wheel);
+                    final Double jumpVy = getAverageVerticalJumpVelocity(player.getLocation(), wheel);
                     if(jumpVy != null) {
                         vy = jumpVy;
                     } else {
@@ -148,7 +148,7 @@ public class PlayerTracker extends AbstractTracker {
         return index;
     }
 
-    private Double getAverageVerticalJumpVelocity(final Player player, final TimerWheel wheel) {
+    private Double getAverageVerticalJumpVelocity(final Location location, final TimerWheel wheel) {
         // All Ys
         List<Double> Ys = new ArrayList<>();
         {
@@ -174,7 +174,7 @@ public class PlayerTracker extends AbstractTracker {
                 tmpIndex = getNext(tmpIndex);
             }
             // We're in a function called before the last player position is stored in the timer wheel
-            Ys.add(player.getLocation().getY());
+            Ys.add(location.getY());
         }
 
         return getAverageVerticalJumpVelocity(Ys);
