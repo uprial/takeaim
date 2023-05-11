@@ -157,7 +157,17 @@ public class PlayerTracker extends AbstractTracker {
             // Fetch all the timerWheel in a loop. The last index in the loop will be the current global index.
             for (int i = 0; i < MAX_HISTORY_LENGTH - 1; i++) {
                 final Checkpoint checkpoint = wheel.get(tmpIndex);
-                // If the player has just joined the game, it won't have all the records in the timerWheel.
+                /*
+                    If the player has just joined the game,
+                    it won't have all the records in the timerWheel.
+
+                    The most complicated case is when a player respawns
+                    and then logs out and then logs in:
+                    there will be a gap in records because the timer wheel index
+                    is global for all the players.
+                    So, this part of code can't be optimized to
+                    while (!wheel.containsKey(...)) i++; while (i < N) Ys.add();
+                 */
                 if (checkpoint != null) {
                     Ys.add(checkpoint.location.getY());
                 }
