@@ -64,14 +64,20 @@ public class ProjectileTracker extends AbstractTracker {
             } else {
                 log(info, projectile, "hit the target");
 
+                /*
+                    The tick #1 is always in the start position,
+                    so we need to deduct 1 to calculate the length.
+                 */
+                final long totalTicks = info.ticksInFly.get() - 1;
                 final Vector avgVelocity = projectile.getLocation().toVector()
                         .subtract(info.startPosition)
-                        .multiply(1.0D / Math.max(1.0D, info.ticksInFly.get()));
+                        .multiply(1.0D / Math.max(1.0D, totalTicks));
 
                 customLogger.debug(String.format("#%d %s average velocity was %s in %d ticks",
-                        info.id, format(projectile), format(avgVelocity), info.ticksInFly.get()));
+                        info.id, format(projectile), format(avgVelocity), totalTicks));
 
                 projectiles.remove(projectile);
+
             }
         }
     }
@@ -87,10 +93,7 @@ public class ProjectileTracker extends AbstractTracker {
                     onHit.add(projectile);
                 } else {
                     final ProjectileInfo info = entry.getValue();
-                    if((info.ticksInFly.get() > 0)
-                        || (!projectile.getLocation().toVector().equals(info.startPosition))) {
-                        info.ticksInFly.incrementAndGet();
-                    }
+                    info.ticksInFly.incrementAndGet();
                     log(info, projectile, "is flying");
 
                 }
