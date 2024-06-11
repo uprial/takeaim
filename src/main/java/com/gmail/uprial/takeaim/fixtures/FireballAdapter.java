@@ -11,7 +11,7 @@ public class FireballAdapter {
     static Method getAccelerationMethod = null;
     static Method setAccelerationMethod = null;
 
-    public static Vector getAcceleration(final Fireball fireball) {
+    public static Vector getAcceleration(final Fireball fireball) throws FireballAdapterNotSupported {
         if(getAccelerationMethod == null) {
             try {
                 getAccelerationMethod = fireball.getClass().getMethod("getAcceleration");
@@ -19,7 +19,7 @@ public class FireballAdapter {
                 try {
                     getAccelerationMethod = fireball.getClass().getMethod("getPower");
                 } catch (NoSuchMethodException e) {
-                    throw new RuntimeException(e);
+                    throw new FireballAdapterNotSupported();
                 }
             }
         }
@@ -31,7 +31,7 @@ public class FireballAdapter {
         }
     }
 
-    public static void setAcceleration(final Fireball fireball, final Vector acceleration) {
+    public static void setAcceleration(final Fireball fireball, final Vector acceleration) throws FireballAdapterNotSupported {
         if(setAccelerationMethod == null) {
             try {
                 setAccelerationMethod = fireball.getClass().getMethod("setAcceleration", Vector.class);
@@ -39,7 +39,7 @@ public class FireballAdapter {
                 try {
                     setAccelerationMethod = fireball.getClass().getMethod("setPower", Vector.class);
                 } catch (NoSuchMethodException e) {
-                    throw new RuntimeException(e);
+                    throw new FireballAdapterNotSupported();
                 }
             }
         }

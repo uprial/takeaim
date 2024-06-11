@@ -3,6 +3,7 @@ package com.gmail.uprial.takeaim.ballistics;
 import com.gmail.uprial.takeaim.TakeAim;
 import com.gmail.uprial.takeaim.common.CustomLogger;
 import com.gmail.uprial.takeaim.fixtures.FireballAdapter;
+import com.gmail.uprial.takeaim.fixtures.FireballAdapterNotSupported;
 import org.bukkit.Location;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
@@ -17,6 +18,8 @@ public class ProjectileHoming {
     private final TakeAim plugin;
     private final CustomLogger customLogger;
 
+    private Boolean isFireballAdapterSupported = null;
+
     private static final double MAX_ARROW_SPEED_PER_TICK = 3.0D;
 
     public ProjectileHoming(final TakeAim plugin, final CustomLogger customLogger) {
@@ -30,7 +33,16 @@ public class ProjectileHoming {
 
     public void aimProjectile(final LivingEntity projectileSource, final Projectile projectile, final Player targetPlayer) {
         if (projectile instanceof Fireball) {
-            aimFireball(projectileSource, (Fireball) projectile, targetPlayer);
+            if(isFireballAdapterSupported == null || isFireballAdapterSupported) {
+                try {
+                    aimFireball(projectileSource, (Fireball) projectile, targetPlayer);
+                    isFireballAdapterSupported = true;
+                } catch (FireballAdapterNotSupported e) {
+                    customLogger.warning(String.format("Can't modify projectile velocity of %s targeted at %s: minecraft version not supported",
+                            format(projectileSource), format(targetPlayer)));
+                    isFireballAdapterSupported = false;
+                }
+            }
         } else {
             aimArrow(projectileSource, projectile, targetPlayer);
         }
@@ -279,7 +291,7 @@ public class ProjectileHoming {
         Note that when living entities and explosive projectiles are simulated,
         the drag is applied after the acceleration, rather than before.
      */
-    private void aimFireball(final LivingEntity projectileSource, final Fireball fireball, final Player targetPlayer) {
+    private void aimFireball(final LivingEntity projectileSource, final Fireball fireball, final Player targetPlayer) throws FireballAdapterNotSupported {
         final Vector playerMovementVector = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
         final Vector initialFireballAcceleration = FireballAdapter.getAcceleration(fireball);
         final ProjectileMotion motion = ProjectileMotion.getProjectileMotion(fireball);
