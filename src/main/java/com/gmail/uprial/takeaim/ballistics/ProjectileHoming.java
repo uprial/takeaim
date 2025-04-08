@@ -128,7 +128,7 @@ public class ProjectileHoming {
 
      */
     private void aimArrow(final LivingEntity projectileSource, final Projectile projectile, final Player targetPlayer) {
-        final Location targetLocation = targetPlayer.getEyeLocation();
+        final Location targetLocation = getAimPoint(targetPlayer);
         // Normalize considering the projectile initial location.
         targetLocation.subtract(projectile.getLocation());
 
@@ -181,10 +181,38 @@ public class ProjectileHoming {
         if(motion.hasDrag()) {
             final double q = (1.0D - motion.getDrag());
             final double normalizedDistanceWithDrag = (1.0D - Math.pow(q, ticksInFly)) / (1.0D - q);
-            newVelocity.multiply(ticksInFly / normalizedDistanceWithDrag);
+            final double dragFix = ticksInFly / normalizedDistanceWithDrag;
+
+            if(motion.hasGravityAcceleration()) {
+                newVelocity.setX(newVelocity.getX() * dragFix);
+                newVelocity.setZ(newVelocity.getZ() * dragFix);
+
+                /*
+                    Here's one more non-precise trade-off.
+
+                    Required vertical speed (VS) consists of two parts:
+                    - VS to overcome gravity acceleration (VSG)
+                    - VS to move vertically (VST)
+
+                    VSG is almost unaffected by the environmental drag:
+                    it slows the projectile similarly in both the up and the down ways.
+
+                    But we need to adjust the VST:
+
+                    VST += VST considering environmental drag.
+
+                    P.S. If the source and the target are on the same vertical coordinates,
+                    we don't need to adjust the VST to consider the environmental drag,
+                    so the VST adjustment is 0.
+                 */
+                newVelocity.setY(newVelocity.getY()
+                        + targetLocation.getY() / ticksInFly * (dragFix - 1.0D));
+            } else {
+                newVelocity.multiply(dragFix);
+            }
         }
         // Add a little speed so that the projectile doesn't attend late for sure.
-        newVelocity.multiply(1.01D);
+        // newVelocity.multiply(1.01D);
 
         projectile.setVelocity(newVelocity);
 
@@ -296,7 +324,7 @@ public class ProjectileHoming {
         final Vector initialFireballAcceleration = FireballAdapter.getAcceleration(fireball);
         final ProjectileMotion motion = ProjectileMotion.getProjectileMotion(fireball);
 
-        final Location initialLocation = targetPlayer.getEyeLocation();
+        final Location initialLocation = getAimPoint(targetPlayer);
         initialLocation.subtract(fireball.getLocation());
 
         final double initialDistance = initialLocation.length();
@@ -430,5 +458,9 @@ public class ProjectileHoming {
             customLogger.debug(String.format("Changed acceleration of %s launched by %s targeted at %s from %s to %s, ETA is %d ticks",
                     fireball.getType(), format(projectileSource), format(targetPlayer), format(initialFireballAcceleration), format(newFireballAcceleration), timeToCollide));
         }
+    }
+
+    private Location getAimPoint(final LivingEntity targetEntity) {
+        return targetEntity.getEyeLocation();
     }
 }
