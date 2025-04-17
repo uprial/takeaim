@@ -15,7 +15,7 @@ import static com.gmail.uprial.takeaim.common.Utils.SERVER_TICKS_IN_SECOND;
 public class PlayerTracker extends AbstractTracker {
     private static final double epsilon = 1.0E-5D;
 
-    private class Checkpoint {
+    private static class Checkpoint {
         final private Location location;
         final private Boolean isJumping;
 
@@ -25,7 +25,7 @@ public class PlayerTracker extends AbstractTracker {
         }
     }
 
-    private class TimerWheel extends HashMap<Integer, Checkpoint> {
+    private static class TimerWheel extends HashMap<Integer, Checkpoint> {
     }
 
     /*
@@ -43,16 +43,14 @@ public class PlayerTracker extends AbstractTracker {
     private static final int MAX_HISTORY_LENGTH = 5 * SERVER_TICKS_IN_SECOND / INTERVAL;
 
     private final TakeAim plugin;
-    private final CustomLogger customLogger;
 
     private final Map<UUID, TimerWheel> players = new HashMap<>();
     private int currentIndex = 0;
 
-    public PlayerTracker(final TakeAim plugin, final CustomLogger customLogger) {
+    public PlayerTracker(final TakeAim plugin) {
         super(plugin, INTERVAL);
 
         this.plugin = plugin;
-        this.customLogger = customLogger;
 
         onConfigChange();
     }
