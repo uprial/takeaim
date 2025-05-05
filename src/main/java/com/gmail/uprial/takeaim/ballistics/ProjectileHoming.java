@@ -205,8 +205,33 @@ public class ProjectileHoming {
                     we don't need to adjust the VST to consider the environmental drag,
                     so the VST adjustment is 0.
                  */
-                newVelocity.setY(newVelocity.getY()
-                        + targetLocation.getY() / ticksInFly * (dragFix - 1.0D));
+                double vy = newVelocity.getY()
+                        + targetLocation.getY() / ticksInFly * (dragFix - 1.0D);
+
+                /*
+                    Fix aiming of projectiles with gravity from long distances
+                    with acute angles: check the approximation.
+                 */
+                {
+                    double t_vy = vy;
+                    // Apply velocity 1st time before gravity and drag
+                    double t_y = t_vy;
+                    for (int i = 0; i < ticksInFly - 1; i++) {
+                        t_vy += motion.getGravityAcceleration()
+                                /*
+                                    Dimension of getGravityAcceleration() is m/s^2,
+                                    but we need block/tick^2.
+                                 */
+                                / Math.pow(SERVER_TICKS_IN_SECOND, 2.0D);
+
+                        t_vy *= (1 - motion.getDrag());
+                        t_y += t_vy;
+                    }
+
+                    vy += (targetLocation.getY() - t_y) / ticksInFly;
+                }
+
+                newVelocity.setY(vy);
             } else {
                 newVelocity.multiply(dragFix);
             }
