@@ -68,7 +68,11 @@ public class PlayerTracker extends AbstractTracker {
                     if(jumpVy != null) {
                         vy = jumpVy;
                     } else {
-                        vy = (player.getLocation().getY() - current.location.getY()) / INTERVAL;
+                        /*
+                            No idea why I had this here for many versions, let's keep it for history:
+                            vy = (player.getLocation().getY() - current.location.getY()) / INTERVAL;
+                         */
+                        vy = (current.location.getY() - previous.location.getY()) / INTERVAL;
                     }
                     // System.out.println(String.format("jumpVy: %.4f", jumpVy));
                 } else {
