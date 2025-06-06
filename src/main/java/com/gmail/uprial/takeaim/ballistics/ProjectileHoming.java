@@ -151,8 +151,9 @@ public class ProjectileHoming {
             final double maxDistance = -Math.pow(MAX_ARROW_SPEED_PER_TICK * SERVER_TICKS_IN_SECOND, 2.0D) / motion.getGravityAcceleration();
 
             if (distance > maxDistance) {
-                customLogger.warning(String.format("Can't modify projectile velocity of %s targeted at %s at a distance of %.2f. Max distance is %.2f",
-                        format(projectileSource), format(targetPlayer), distance, maxDistance));
+                customLogger.warning(String.format("Can't modify velocity of %s at a distance of %.2f: max distance is %.2f",
+                        getDescription(projectileSource, projectile, targetPlayer),
+                        distance, maxDistance));
                 return;
             }
         }
@@ -213,20 +214,16 @@ public class ProjectileHoming {
                     with acute angles: check the approximation.
                  */
                 {
-                    double t_vy = vy;
-                    // Apply velocity 1st time before gravity and drag
-                    double t_y = t_vy;
-                    for (int i = 0; i < ticksInFly - 1; i++) {
-                        t_vy += motion.getGravityAcceleration()
+                    final double t_y = getAcceleratedAndDragged(
+                            vy,
+                            (int)ticksInFly - 1,
+                            motion.getGravityAcceleration()
                                 /*
                                     Dimension of getGravityAcceleration() is m/s^2,
                                     but we need block/tick^2.
                                  */
-                                / Math.pow(SERVER_TICKS_IN_SECOND, 2.0D);
-
-                        t_vy *= (1 - motion.getDrag());
-                        t_y += t_vy;
-                    }
+                                    / Math.pow(SERVER_TICKS_IN_SECOND, 2.0D),
+                            motion.getDrag());
 
                     vy += (targetLocation.getY() - t_y) / ticksInFly;
                 }
@@ -242,8 +239,9 @@ public class ProjectileHoming {
         projectile.setVelocity(newVelocity);
 
         if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Changed velocity of %s launched by %s targeted at %s from %s to %s, ETA is %.0f ticks",
-                    projectile.getType(), format(projectileSource), format(targetPlayer), format(initialProjectileVelocity), format(newVelocity), ticksInFly));
+            customLogger.debug(String.format("Changed velocity of %s from %s to %s, ETA is %d ticks",
+                    getDescription(projectileSource, projectile, targetPlayer),
+                    format(initialProjectileVelocity), format(newVelocity), ticksInFly));
         }
     }
 
@@ -385,8 +383,9 @@ public class ProjectileHoming {
 
                 final double maxFireballVelocity = initialAcceleration / motion.getDrag() - initialAcceleration;
                 if (maxFireballVelocity <= playerVelocity) {
-                    customLogger.warning(String.format("Can't modify projectile velocity of %s targeted at %s with velocity %.2f. Max velocity is %.2f",
-                            format(projectileSource), format(targetPlayer), playerVelocity, maxFireballVelocity));
+                    customLogger.warning(String.format("Can't modify acceleration of %s with player velocity %.2f: max fireball velocity is %.2f",
+                            getDescription(projectileSource, fireball, targetPlayer),
+                            playerVelocity, maxFireballVelocity));
                     return;
                 }
 
@@ -405,7 +404,7 @@ public class ProjectileHoming {
             }
         }
 
-        int timeToCollide = (int)Math.round(approximateTimeToCollide);
+        int timeToCollide = (int)Math.ceil(approximateTimeToCollide);
 
         double acceleration = initialFireballAcceleration.length();
         Location targetLocation;
@@ -423,18 +422,18 @@ public class ProjectileHoming {
 
             final double targetDistance = targetLocation.length();
 
-            double velocity = 0;
-            double actualDistance = 0;
-            for (int i = 0; i < timeToCollide; i++) {
-                velocity += acceleration;
-                velocity *= (1 - motion.getDrag());
-                actualDistance += velocity;
-            }
-            /*customLogger.info(String.format("Attempt to aim %s launched by %s targeted at %s: " +
+            final double actualDistance = getAcceleratedAndDragged(
+                    0.0D,
+                    // Experimentally proven
+                    timeToCollide,
+                    acceleration,
+                    motion.getDrag());
+
+            /*customLogger.info(String.format("Attempt to aim of %s: " +
                             "drag %.2f, is-low-drag %b, last attempt time to collide %d, " +
                             "last attempt target distance %.2f, last attempt actual distance %.2f, " +
                             "last attempt acceleration %.4f, attempts left %d",
-                    fireball.getType(), format(projectileSource), format(targetPlayer),
+                    getDescription(projectileSource, fireball, targetPlayer),
                     motion.getDrag(), isLowDrag, timeToCollide,
                     targetDistance, actualDistance,
                     acceleration, attempts));*/
@@ -442,10 +441,10 @@ public class ProjectileHoming {
             if(Math.abs(actualDistance - targetDistance) / targetDistance < 0.01) {
                 break;
             } else {
-                if (attempts > lastResortAttempts - 1) {
+                if (attempts >= lastResortAttempts) {
                     final int previousTimeToCollide = timeToCollide;
                     if(isLowDrag) {
-                        timeToCollide = (int) Math.round(timeToCollide * Math.sqrt(targetDistance / actualDistance));
+                        timeToCollide = (int) Math.ceil(timeToCollide * Math.sqrt(targetDistance / actualDistance));
                     } else {
                         final double playerVelocity = (targetDistance - initialDistance) / timeToCollide;
                         final double maxFireballVelocity = acceleration / motion.getDrag() - acceleration;
@@ -453,7 +452,7 @@ public class ProjectileHoming {
                             // Fireball is too slow, only the last resort may help.
                             attempts = lastResortAttempts;
                         } else {
-                            timeToCollide += (int) Math.round(
+                            timeToCollide += (int) Math.ceil(
                                     (targetDistance - actualDistance) / (maxFireballVelocity - playerVelocity)
                             );
                         }
@@ -480,14 +479,35 @@ public class ProjectileHoming {
         FireballAdapter.setAcceleration(fireball, newFireballAcceleration);
 
         if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Changed acceleration of %s launched by %s targeted at %s from %s to %s, ETA is %d ticks",
-                    fireball.getType(), format(projectileSource), format(targetPlayer), format(initialFireballAcceleration), format(newFireballAcceleration), timeToCollide));
+            customLogger.debug(String.format("Changed acceleration of %s from %s to %s, ETA is %d ticks",
+                    getDescription(projectileSource, fireball, targetPlayer),
+                    format(initialFireballAcceleration), format(newFireballAcceleration), timeToCollide));
         }
+    }
+
+    private double getAcceleratedAndDragged(double velocity,
+                                            final int ticks,
+                                            final double acceleration,
+                                            final double drag) {
+        // Apply velocity 1st time before gravity and drag
+        double position = velocity;
+        for (int i = 0; i < ticks; i++) {
+            velocity += acceleration;
+            velocity *= (1 - drag);
+            position += velocity;
+        }
+
+        return position;
     }
 
     private Location getAimPoint(final Player targetPlayer) {
         return targetPlayer.getLocation()
                 .add(targetPlayer.getEyeLocation())
                 .multiply(0.5D);
+    }
+
+    private String getDescription(final LivingEntity projectileSource, final Projectile projectile, final Player targetPlayer) {
+        return String.format("%s launched by %s targeted at %s",
+                format(projectile), format(projectileSource), format(targetPlayer));
     }
 }
