@@ -236,6 +236,7 @@ public class PlayerTracker extends AbstractTracker {
      */
     private boolean isPlayerJumping(final Player player) {
         return ((!player.isFlying())
+                && (!player.isGliding())
                 && (!player.isSwimming())
                 && (!player.isClimbing())
                 && (Math.abs(player.getVelocity().getY() - DEFAULT_PLAYER_ACCELERATION) > epsilon));
