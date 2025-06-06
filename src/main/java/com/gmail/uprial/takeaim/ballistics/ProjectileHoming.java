@@ -135,7 +135,7 @@ public class ProjectileHoming {
         final Vector initialProjectileVelocity = projectile.getVelocity();
 
         // How long the projectile will be enforced to fly to the target player.
-        final double ticksInFly = Math.ceil(targetLocation.length() / initialProjectileVelocity.length());
+        final int ticksInFly = roundTicks(targetLocation.length() / initialProjectileVelocity.length());
 
         // Consider the target player is running somewhere.
         {
@@ -168,7 +168,7 @@ public class ProjectileHoming {
             if (motion.hasGravityAcceleration()) {
                 final double y1 = 0.0D;
                 final double y2 = targetLocation.getY();
-                final double t = ticksInFly / SERVER_TICKS_IN_SECOND;
+                final double t = 1.0D * ticksInFly / SERVER_TICKS_IN_SECOND;
 
                 vy = ((y2 - (motion.getGravityAcceleration() * t * t / 2.0D) - y1) / t) / SERVER_TICKS_IN_SECOND;
             } else {
@@ -182,7 +182,7 @@ public class ProjectileHoming {
         if(motion.hasDrag()) {
             final double q = (1.0D - motion.getDrag());
             final double normalizedDistanceWithDrag = (1.0D - Math.pow(q, ticksInFly)) / (1.0D - q);
-            final double dragFix = ticksInFly / normalizedDistanceWithDrag;
+            final double dragFix = 1.0D * ticksInFly / normalizedDistanceWithDrag;
 
             if(motion.hasGravityAcceleration()) {
                 newVelocity.setX(newVelocity.getX() * dragFix);
@@ -216,7 +216,7 @@ public class ProjectileHoming {
                 {
                     final double t_y = getAcceleratedAndDragged(
                             vy,
-                            (int)ticksInFly - 1,
+                            ticksInFly,
                             motion.getGravityAcceleration()
                                 /*
                                     Dimension of getGravityAcceleration() is m/s^2,
@@ -352,7 +352,7 @@ public class ProjectileHoming {
 
         final double initialDistance = initialLocation.length();
 
-        final double approximateTimeToCollide;
+        final double approximateTicksToCollide;
         final boolean isLowDrag;
         {
             final double initialAcceleration = initialFireballAcceleration.length();
@@ -397,14 +397,14 @@ public class ProjectileHoming {
 
             if(lowDragT > highDragT) {
                 isLowDrag = true;
-                approximateTimeToCollide = lowDragT;
+                approximateTicksToCollide = lowDragT;
             } else {
                 isLowDrag = false;
-                approximateTimeToCollide = highDragT;
+                approximateTicksToCollide = highDragT;
             }
         }
 
-        int timeToCollide = (int)Math.ceil(approximateTimeToCollide);
+        int ticksToCollide = roundTicks(approximateTicksToCollide);
 
         double acceleration = initialFireballAcceleration.length();
         Location targetLocation;
@@ -417,7 +417,7 @@ public class ProjectileHoming {
             targetLocation = initialLocation.clone();
 
             final Vector playerMovement = playerMovementVector.clone();
-            playerMovement.multiply(timeToCollide);
+            playerMovement.multiply(ticksToCollide);
             targetLocation.add(playerMovement);
 
             final double targetDistance = targetLocation.length();
@@ -425,16 +425,16 @@ public class ProjectileHoming {
             final double actualDistance = getAcceleratedAndDragged(
                     0.0D,
                     // Experimentally proven
-                    timeToCollide,
+                    ticksToCollide,
                     acceleration,
                     motion.getDrag());
 
             /*customLogger.info(String.format("Attempt to aim of %s: " +
-                            "drag %.2f, is-low-drag %b, last attempt time to collide %d, " +
+                            "drag %.2f, is-low-drag %b, last attempt ticks to collide %d, " +
                             "last attempt target distance %.2f, last attempt actual distance %.2f, " +
                             "last attempt acceleration %.4f, attempts left %d",
                     getDescription(projectileSource, fireball, targetPlayer),
-                    motion.getDrag(), isLowDrag, timeToCollide,
+                    motion.getDrag(), isLowDrag, ticksToCollide,
                     targetDistance, actualDistance,
                     acceleration, attempts));*/
 
@@ -442,24 +442,24 @@ public class ProjectileHoming {
                 break;
             } else {
                 if (attempts >= lastResortAttempts) {
-                    final int previousTimeToCollide = timeToCollide;
+                    final int previousTicksToCollide = ticksToCollide;
                     if(isLowDrag) {
-                        timeToCollide = (int) Math.ceil(timeToCollide * Math.sqrt(targetDistance / actualDistance));
+                        ticksToCollide = roundTicks(1.0D * ticksToCollide * Math.sqrt(targetDistance / actualDistance));
                     } else {
-                        final double playerVelocity = (targetDistance - initialDistance) / timeToCollide;
+                        final double playerVelocity = (targetDistance - initialDistance) / ticksToCollide;
                         final double maxFireballVelocity = acceleration / motion.getDrag() - acceleration;
                         if (maxFireballVelocity <= playerVelocity) {
                             // Fireball is too slow, only the last resort may help.
                             attempts = lastResortAttempts;
                         } else {
-                            timeToCollide += (int) Math.ceil(
+                            ticksToCollide += roundTicks(
                                     (targetDistance - actualDistance) / (maxFireballVelocity - playerVelocity)
                             );
                         }
                     }
-                    if (timeToCollide == previousTimeToCollide) {
+                    if (ticksToCollide == previousTicksToCollide) {
                         /*
-                         Regarding time approximation, we've achieved the best possible result,
+                         Regarding ticks approximation, we've achieved the best possible result,
                          which is still not good enough.
 
                          Only the last resort may help.
@@ -481,7 +481,7 @@ public class ProjectileHoming {
         if(customLogger.isDebugMode()) {
             customLogger.debug(String.format("Changed acceleration of %s from %s to %s, ETA is %d ticks",
                     getDescription(projectileSource, fireball, targetPlayer),
-                    format(initialFireballAcceleration), format(newFireballAcceleration), timeToCollide));
+                    format(initialFireballAcceleration), format(newFireballAcceleration), ticksToCollide));
         }
     }
 
@@ -504,6 +504,10 @@ public class ProjectileHoming {
         return targetPlayer.getLocation()
                 .add(targetPlayer.getEyeLocation())
                 .multiply(0.5D);
+    }
+
+    private int roundTicks(final double ticks) {
+        return (int)Math.ceil(ticks);
     }
 
     private String getDescription(final LivingEntity projectileSource, final Projectile projectile, final Player targetPlayer) {
