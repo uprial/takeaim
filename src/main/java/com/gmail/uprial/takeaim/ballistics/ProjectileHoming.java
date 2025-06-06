@@ -485,7 +485,9 @@ public class ProjectileHoming {
         }
     }
 
-    private Location getAimPoint(final LivingEntity targetEntity) {
-        return targetEntity.getEyeLocation();
+    private Location getAimPoint(final Player targetPlayer) {
+        return targetPlayer.getLocation()
+                .add(targetPlayer.getEyeLocation())
+                .multiply(0.5D);
     }
 }
