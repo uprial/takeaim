@@ -10,13 +10,13 @@ public final class Formatter {
         if (entity == null) {
             return "null";
         }
-        Location location = entity.getLocation();
-        return String.format("%s[w: %s, x: %.0f, y: %.0f, z: %.0f, hp: %.2f, id: %s]",
+        final Location location = entity.getLocation();
+        return String.format("%s[w: %s, x: %.2f, y: %.2f, z: %.2f, hp: %.2f, id: %s]",
                 entity.getType(),
                 (location.getWorld() != null) ? location.getWorld().getName() : "empty",
                 location.getX(), location.getY(), location.getZ(),
-                (entity instanceof LivingEntity) ? ((LivingEntity) entity).getHealth() : -1,
-                entity.getUniqueId());
+                (entity instanceof LivingEntity) ? ((LivingEntity) entity).getHealth() : -1.0D,
+                entity.getUniqueId().toString().substring(0, 8));
     }
 
     public static String format(Vector vector) {

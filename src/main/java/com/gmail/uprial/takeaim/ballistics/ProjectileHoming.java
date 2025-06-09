@@ -135,7 +135,7 @@ public class ProjectileHoming {
         final Vector initialProjectileVelocity = projectile.getVelocity();
 
         // How long the projectile will be enforced to fly to the target player.
-        final int ticksInFly = roundTicks(targetLocation.length() / initialProjectileVelocity.length());
+        final int ticksInFly = (int)Math.ceil(targetLocation.length() / initialProjectileVelocity.length());
 
         // Consider the target player is running somewhere.
         {
@@ -343,158 +343,125 @@ public class ProjectileHoming {
         the drag is applied after the acceleration, rather than before.
      */
     private void aimFireball(final LivingEntity projectileSource, final Fireball fireball, final Player targetPlayer) throws FireballAdapterNotSupported {
-        final Vector playerMovementVector = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
-        final Vector initialFireballAcceleration = FireballAdapter.getAcceleration(fireball);
+        final Vector velocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
+        final Vector acceleration = FireballAdapter.getAcceleration(fireball);
         final ProjectileMotion motion = ProjectileMotion.getProjectileMotion(fireball);
 
-        final Location initialLocation = getAimPoint(targetPlayer);
-        initialLocation.subtract(fireball.getLocation());
+        final Location location = getAimPoint(targetPlayer);
+        location.subtract(fireball.getLocation());
 
-        final double initialDistance = initialLocation.length();
-
-        final double approximateTicksToCollide;
+        double ticksToCollide;
         final boolean isLowDrag;
         {
-            final double initialAcceleration = initialFireballAcceleration.length();
-
             final double lowDragT;
             {
-                final Location targetLocation = initialLocation.clone();
-                targetLocation.add(playerMovementVector);
-
-                // Approximated flat distance that that player will move in one tick.
-                final double playerVelocity = targetLocation.length() - initialDistance;
-
-                lowDragT = playerVelocity
-                        + Math.pow(Math.pow(playerVelocity, 2.0D) + 2.0D * initialAcceleration * initialDistance, 0.5D)
-                        / (initialAcceleration);
+                lowDragT = velocity.length()
+                        + Math.pow(Math.pow(velocity.length(), 2.0D) + 2.0D * acceleration.length() * location.length(), 0.5D)
+                        / (acceleration.length());
             }
 
             final double highDragT;
             {
-                final Location targetLocation = initialLocation.clone();
-                final Vector playerMovement = playerMovementVector.clone();
-                playerMovement.multiply(lowDragT);
-                targetLocation.add(playerMovement);
-
-                // Approximated flat distance that the player will move in one tick,
-                // using already calculated minimum time.
-                final double playerVelocity = (targetLocation.length() - initialDistance) / lowDragT;
-
-                final double maxFireballVelocity = initialAcceleration / motion.getDrag() - initialAcceleration;
-                if (maxFireballVelocity <= playerVelocity) {
+                final double maxFireballVelocity = acceleration.length() / motion.getDrag() - acceleration.length();
+                if (maxFireballVelocity <= velocity.length()) {
                     customLogger.warning(String.format("Can't modify acceleration of %s with player velocity %.2f: max fireball velocity is %.2f",
                             getDescription(projectileSource, fireball, targetPlayer),
-                            playerVelocity, maxFireballVelocity));
+                            velocity.length(), maxFireballVelocity));
                     return;
                 }
 
                 // When a fireball accelerates, it moves slower initially.
                 // Empirically, it loses (1 - drag) of total distance on that phase.
-                highDragT = (initialDistance + (1.0D - motion.getDrag()))
-                        / (maxFireballVelocity - playerVelocity);
+                highDragT = (location.length() + (1.0D - motion.getDrag()))
+                        / (maxFireballVelocity - velocity.length());
             }
 
             if(lowDragT > highDragT) {
                 isLowDrag = true;
-                approximateTicksToCollide = lowDragT;
+                ticksToCollide = lowDragT;
             } else {
                 isLowDrag = false;
-                approximateTicksToCollide = highDragT;
+                ticksToCollide = highDragT;
             }
         }
 
-        int ticksToCollide = roundTicks(approximateTicksToCollide);
-
-        double acceleration = initialFireballAcceleration.length();
         Location targetLocation;
 
-        final int lastResortAttempts = 2;
-        int attempts = lastResortAttempts + 3;
+        int attempts = 10;
         do {
             attempts -= 1;
 
-            targetLocation = initialLocation.clone();
-
-            final Vector playerMovement = playerMovementVector.clone();
-            playerMovement.multiply(ticksToCollide);
-            targetLocation.add(playerMovement);
+            targetLocation = location.clone()
+                    .add(velocity.clone().multiply(ticksToCollide));
 
             final double targetDistance = targetLocation.length();
 
             final double actualDistance = getAcceleratedAndDragged(
                     0.0D,
-                    // Experimentally proven
                     ticksToCollide,
-                    acceleration,
+                    acceleration.length(),
                     motion.getDrag());
 
             /*customLogger.info(String.format("Attempt to aim of %s: " +
-                            "drag %.2f, is-low-drag %b, last attempt ticks to collide %d, " +
-                            "last attempt target distance %.2f, last attempt actual distance %.2f, " +
-                            "last attempt acceleration %.4f, attempts left %d",
+                            "drag %.2f, is-low-drag %b, " +
+                            "static distance %.2f, ticks to collide %.2f, target distance %.2f, " +
+                            "actual distance %.2f, attempts left %d",
                     getDescription(projectileSource, fireball, targetPlayer),
-                    motion.getDrag(), isLowDrag, ticksToCollide,
-                    targetDistance, actualDistance,
-                    acceleration, attempts));*/
+                    motion.getDrag(), isLowDrag,
+                    location.length(), ticksToCollide, targetDistance,
+                    actualDistance, attempts));*/
 
-            if(Math.abs(actualDistance - targetDistance) / targetDistance < 0.01) {
+            if(Math.abs(actualDistance - targetDistance) < 0.01D) {
                 break;
+            }
+            if(isLowDrag) {
+                ticksToCollide = ticksToCollide * Math.sqrt(targetDistance / actualDistance);
             } else {
-                if (attempts >= lastResortAttempts) {
-                    final int previousTicksToCollide = ticksToCollide;
-                    if(isLowDrag) {
-                        ticksToCollide = roundTicks(1.0D * ticksToCollide * Math.sqrt(targetDistance / actualDistance));
-                    } else {
-                        final double playerVelocity = (targetDistance - initialDistance) / ticksToCollide;
-                        final double maxFireballVelocity = acceleration / motion.getDrag() - acceleration;
-                        if (maxFireballVelocity <= playerVelocity) {
-                            // Fireball is too slow, only the last resort may help.
-                            attempts = lastResortAttempts;
-                        } else {
-                            ticksToCollide += roundTicks(
-                                    (targetDistance - actualDistance) / (maxFireballVelocity - playerVelocity)
-                            );
-                        }
-                    }
-                    if (ticksToCollide == previousTicksToCollide) {
-                        /*
-                         Regarding ticks approximation, we've achieved the best possible result,
-                         which is still not good enough.
-
-                         Only the last resort may help.
-                         */
-                        attempts = lastResortAttempts;
-                    }
-                }
-                if (attempts <= lastResortAttempts) {
-                    // Last resort: modify actual acceleration
-                    acceleration = acceleration * targetDistance / actualDistance;
+                final double playerVelocity = (targetDistance - location.length()) / ticksToCollide;
+                final double maxFireballVelocity = acceleration.length() / motion.getDrag() - acceleration.length();
+                if (maxFireballVelocity <= playerVelocity) {
+                    customLogger.warning(String.format("Can't modify acceleration of %s with player velocity %.2f: max fireball velocity is %.2f",
+                            getDescription(projectileSource, fireball, targetPlayer),
+                            playerVelocity, maxFireballVelocity));
+                    return;
+                } else {
+                    ticksToCollide += (targetDistance - actualDistance) / (maxFireballVelocity - playerVelocity);
                 }
             }
         } while (attempts > 0);
 
-        final Vector newFireballAcceleration = targetLocation.toVector();
-        newFireballAcceleration.multiply(acceleration / newFireballAcceleration.length());
-        FireballAdapter.setAcceleration(fireball, newFireballAcceleration);
+        final Vector newAcceleration = targetLocation.toVector();
+        newAcceleration.multiply(acceleration.length() / newAcceleration.length());
+        FireballAdapter.setAcceleration(fireball, newAcceleration);
 
-        if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Changed acceleration of %s from %s to %s, ETA is %d ticks",
+        if(attempts <= 0) {
+            customLogger.warning(String.format("Changed acceleration of %s from %s to %s, ETA is %.2f ticks, no attempts left",
                     getDescription(projectileSource, fireball, targetPlayer),
-                    format(initialFireballAcceleration), format(newFireballAcceleration), ticksToCollide));
+                    format(acceleration), format(newAcceleration), ticksToCollide));
+        } else if(customLogger.isDebugMode()) {
+            customLogger.debug(String.format("Changed acceleration of %s from %s to %s, ETA is %.2f ticks, %d attempts left",
+                    getDescription(projectileSource, fireball, targetPlayer),
+                    format(acceleration), format(newAcceleration), ticksToCollide, attempts));
         }
     }
 
     private double getAcceleratedAndDragged(double velocity,
-                                            final int ticks,
+                                            final double doubleTicks,
                                             final double acceleration,
                                             final double drag) {
         // Apply velocity 1st time before gravity and drag
         double position = velocity;
-        for (int i = 0; i < ticks; i++) {
+        int intTicks = (int)Math.floor(doubleTicks);
+        for (int i = 0; i < intTicks; i++) {
             velocity += acceleration;
             velocity *= (1 - drag);
             position += velocity;
+        }
+        // Apply the last, potentially partial tick
+        if(doubleTicks > intTicks) {
+            velocity += acceleration;
+            velocity *= (1 - drag);
+            position += velocity * (doubleTicks - intTicks);
         }
 
         return position;
@@ -504,10 +471,6 @@ public class ProjectileHoming {
         return targetPlayer.getLocation()
                 .add(targetPlayer.getEyeLocation())
                 .multiply(0.5D);
-    }
-
-    private int roundTicks(final double ticks) {
-        return (int)Math.ceil(ticks);
     }
 
     private String getDescription(final LivingEntity projectileSource, final Projectile projectile, final Player targetPlayer) {
