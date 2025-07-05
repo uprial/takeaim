@@ -64,21 +64,16 @@ public class PlayerTracker extends AbstractTracker {
             if((current != null) && (previous != null)) {
                 final double vy;
                 if(isPlayerJumping(player) || previous.isJumping || current.isJumping) {
+                    // Try to predict Y more precise when the player is jumping for some time
                     final Double jumpVy = getAverageVerticalJumpVelocity(player.getLocation(), wheel);
                     if(jumpVy != null) {
                         vy = jumpVy;
                     } else {
-                        /*
-                            No idea why I had this here for many versions, let's keep it for history:
-                            vy = (player.getLocation().getY() - current.location.getY()) / INTERVAL;
-                         */
                         vy = (current.location.getY() - previous.location.getY()) / INTERVAL;
                     }
-                    // System.out.println(String.format("jumpVy: %.4f", jumpVy));
                 } else {
                     vy = (current.location.getY() - previous.location.getY()) / INTERVAL;
                 }
-                // System.out.println(String.format("vy: %.4f", vy));
                 return new Vector(
                         (current.location.getX() - previous.location.getX()) / INTERVAL,
                         vy,
