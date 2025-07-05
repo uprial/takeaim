@@ -28,6 +28,10 @@ A Minecraft (Bukkit) plugin that allows to improve aiming of creatures.
 ## Configuration
 [Default configuration file](src/main/resources/config.yml)
 
+## Integration from other plugins
+
+An example of how to check that TakeAim is enabled and to work if it's not: [TakeAimAdapter.java](https://github.com/uprial/masochisticsurvival/blob/main/src/main/java/com/gmail/uprial/masochisticsurvival/common/TakeAimAdapter.java)
+
 ## Author
 I will be happy to add some features or fix bugs. My mail: uprial@gmail.com.
 
