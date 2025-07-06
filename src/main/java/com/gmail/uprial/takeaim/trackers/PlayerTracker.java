@@ -1,7 +1,6 @@
 package com.gmail.uprial.takeaim.trackers;
 
 import com.gmail.uprial.takeaim.TakeAim;
-import com.gmail.uprial.takeaim.common.CustomLogger;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -9,23 +8,22 @@ import org.bukkit.util.Vector;
 import java.util.*;
 
 import static com.gmail.uprial.takeaim.ballistics.ProjectileMotion.DEFAULT_PLAYER_ACCELERATION;
-import static com.gmail.uprial.takeaim.common.Formatter.format;
 import static com.gmail.uprial.takeaim.common.Utils.SERVER_TICKS_IN_SECOND;
 
 public class PlayerTracker extends AbstractTracker {
-    private static final double epsilon = 1.0E-5D;
+    private static final double EPSILON = 1.0E-5D;
 
-    private static class Checkpoint {
+    static class Checkpoint {
         final private Location location;
-        final private Boolean isJumping;
+        final private boolean isJumping;
 
-        Checkpoint(final Location location, final Boolean isJumping) {
+        Checkpoint(final Location location, final boolean isJumping) {
             this.location = location;
             this.isJumping = isJumping;
         }
     }
 
-    private static class TimerWheel extends HashMap<Integer, Checkpoint> {
+    static class TimerWheel extends HashMap<Integer, Checkpoint> {
     }
 
     /*
@@ -34,18 +32,25 @@ public class PlayerTracker extends AbstractTracker {
         WARNING: This fine-tuned number is used to detect jumps
         and predict the next move. You can't just change it. :)
      */
-    private static final int INTERVAL = SERVER_TICKS_IN_SECOND / 4;
+    static final int INTERVAL = SERVER_TICKS_IN_SECOND / 4;
     /*
         A longer interval is used to analyze jump history.
 
         Must be at least two to proper timer wheel function.
      */
-    private static final int MAX_HISTORY_LENGTH = 5 * SERVER_TICKS_IN_SECOND / INTERVAL;
+    static final int MAX_HISTORY_LENGTH = 5 * SERVER_TICKS_IN_SECOND / INTERVAL;
+
+    /*
+        A player is moving straight
+        when its move direction between intervals
+        deviates no more than this epsilon.
+     */
+    private static final double PROPORTION_EPSILON = 0.02D;
 
     private final TakeAim plugin;
 
-    private final Map<UUID, TimerWheel> players = new HashMap<>();
-    private int currentIndex = 0;
+    final Map<UUID, TimerWheel> players = new HashMap<>();
+    int currentIndex = 0;
 
     public PlayerTracker(final TakeAim plugin) {
         super(plugin, INTERVAL);
@@ -62,23 +67,47 @@ public class PlayerTracker extends AbstractTracker {
             final Checkpoint current = wheel.get(currentIndex);
             final Checkpoint previous = wheel.get(getPrev(currentIndex));
             if((current != null) && (previous != null)) {
-                final double vy;
                 if(isPlayerJumping(player) || previous.isJumping || current.isJumping) {
-                    // Try to predict Y more precise when the player is jumping for some time
+                    // Try to predict Y more precise when the player is jumping
                     final Double jumpVy = getAverageVerticalJumpVelocity(player.getLocation(), wheel);
                     if(jumpVy != null) {
-                        vy = jumpVy;
-                    } else {
-                        vy = (current.location.getY() - previous.location.getY()) / INTERVAL;
+                        return new Vector(
+                                (current.location.getX() - previous.location.getX()) / INTERVAL,
+                                jumpVy,
+                                (current.location.getZ() - previous.location.getZ()) / INTERVAL
+                        );
                     }
-                } else {
-                    vy = (current.location.getY() - previous.location.getY()) / INTERVAL;
                 }
-                return new Vector(
-                        (current.location.getX() - previous.location.getX()) / INTERVAL,
-                        vy,
-                        (current.location.getZ() - previous.location.getZ()) / INTERVAL
-                );
+
+                final Vector lastMove = getDeducted(previous.location, current.location, 1);
+
+                int sameDirectionIntervals = 1;
+                Checkpoint sameDirectionStart = null;
+
+                int tmpIndex = getPrev(currentIndex);
+                for (int i = 0; i < MAX_HISTORY_LENGTH - 2; i++) {
+                    final Checkpoint tmpCurrent = wheel.get(tmpIndex);
+                    tmpIndex = getPrev(tmpIndex);
+                    final Checkpoint tmpPrevious = wheel.get(tmpIndex);
+
+                    if(tmpPrevious == null) {
+                        break;
+                    }
+
+                    final Vector tmpMove = getDeducted(tmpPrevious.location, tmpCurrent.location, 1);
+                    if(!isProportionalMove(tmpMove, lastMove)) {
+                        break;
+                    }
+
+                    sameDirectionIntervals ++;
+                    sameDirectionStart = tmpPrevious;
+                }
+
+                if(sameDirectionStart == null) {
+                    return lastMove;
+                } else {
+                    return getDeducted(sameDirectionStart.location, current.location, sameDirectionIntervals);
+                }
             }
         }
         return new Vector(0.0, 0.0, 0.0);
@@ -112,7 +141,6 @@ public class PlayerTracker extends AbstractTracker {
                 }
                 wheel.put(nextIndex, new Checkpoint(player.getLocation(), isPlayerJumping(player)));
             }
-            // System.out.println(String.format("Velocity: %s, Jumping: %b", format(player.getVelocity()), isPlayerJumping(player)));
         }
         currentIndex = nextIndex;
     }
@@ -229,6 +257,34 @@ public class PlayerTracker extends AbstractTracker {
     }
 
     /*
+        When the server is under load, e.g., generating new terrain,
+        and when the player moves,
+        then the server is updating the player location not smoothly,
+        but with different delays.
+
+        To increase the precision of the player move prediction,
+        I average all the player movements in the same direction.
+
+        And "same direction" means that two moves are proportional.
+     */
+    static boolean isProportionalMove(final Vector m1, final Vector m2) {
+        final double l1 = m1.length();
+        final double l2 = m2.length();
+        return (l1 >= EPSILON) && (l2 >= EPSILON)
+                && (Math.abs(m1.getX() / l1 - m2.getX() / l2) < PROPORTION_EPSILON)
+                && (Math.abs(m1.getY() / l1 - m2.getY() / l2) < PROPORTION_EPSILON)
+                && (Math.abs(m1.getZ() / l1 - m2.getZ() / l2) < PROPORTION_EPSILON);
+    }
+
+    private Vector getDeducted(final Location source, final Location target, final int internals) {
+        return new Vector(
+                (target.getX() - source.getX()) / INTERVAL / internals,
+                (target.getY() - source.getY()) / INTERVAL / internals,
+                (target.getZ() - source.getZ()) / INTERVAL / internals
+        );
+    }
+
+    /*
         An idea of how to detect a jump:
             - the player is not flying, not swimming, now climbing
             - a player vertical velocity does not equal to the default player vertical velocity
@@ -238,6 +294,6 @@ public class PlayerTracker extends AbstractTracker {
                 && (!player.isGliding())
                 && (!player.isSwimming())
                 && (!player.isClimbing())
-                && (Math.abs(player.getVelocity().getY() - DEFAULT_PLAYER_ACCELERATION) > epsilon));
+                && (Math.abs(player.getVelocity().getY() - DEFAULT_PLAYER_ACCELERATION) > EPSILON));
     }
 }

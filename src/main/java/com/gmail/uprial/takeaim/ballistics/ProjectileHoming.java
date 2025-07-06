@@ -22,6 +22,8 @@ public class ProjectileHoming {
 
     private static final double MAX_ARROW_SPEED_PER_TICK = 3.0D;
 
+    private static final double FIREBALL_EPSILON = 0.01D;
+
     public ProjectileHoming(final TakeAim plugin, final CustomLogger customLogger) {
         this.plugin = plugin;
         this.customLogger = customLogger;
@@ -411,7 +413,7 @@ public class ProjectileHoming {
                     location.length(), ticksToCollide, targetDistance,
                     actualDistance, attempts));*/
 
-            if(Math.abs(actualDistance - targetDistance) < 0.01D) {
+            if(Math.abs(actualDistance - targetDistance) < FIREBALL_EPSILON) {
                 break;
             }
             if(isLowDrag) {
