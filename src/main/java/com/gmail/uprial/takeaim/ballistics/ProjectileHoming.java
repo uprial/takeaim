@@ -21,8 +21,10 @@ public class ProjectileHoming {
     private Boolean isFireballAdapterSupported = null;
 
     private static final double MAX_ARROW_SPEED_PER_TICK = 3.0D;
+    private static final int ARROW_DRAG_APPROXIMATION_ATTEMPTS = 3;
 
     private static final double FIREBALL_EPSILON = 0.01D;
+    private static final int FIREBALL_DRAG_APPROXIMATION_ATTEMPTS = 5;
 
     public ProjectileHoming(final TakeAim plugin, final CustomLogger customLogger) {
         this.plugin = plugin;
@@ -137,7 +139,7 @@ public class ProjectileHoming {
         final Vector initialProjectileVelocity = projectile.getVelocity();
 
         // How long the projectile will be enforced to fly to the target player.
-        final int ticksInFly = (int)Math.ceil(targetLocation.length() / initialProjectileVelocity.length());
+        final double ticksInFly = targetLocation.length() / initialProjectileVelocity.length();
 
         // Consider the target player is running somewhere.
         {
@@ -170,7 +172,7 @@ public class ProjectileHoming {
             if (motion.hasGravityAcceleration()) {
                 final double y1 = 0.0D;
                 final double y2 = targetLocation.getY();
-                final double t = 1.0D * ticksInFly / SERVER_TICKS_IN_SECOND;
+                final double t = ticksInFly / SERVER_TICKS_IN_SECOND;
 
                 vy = ((y2 - (motion.getGravityAcceleration() * t * t / 2.0D) - y1) / t) / SERVER_TICKS_IN_SECOND;
             } else {
@@ -184,7 +186,7 @@ public class ProjectileHoming {
         if(motion.hasDrag()) {
             final double q = (1.0D - motion.getDrag());
             final double normalizedDistanceWithDrag = (1.0D - Math.pow(q, ticksInFly)) / (1.0D - q);
-            final double dragFix = 1.0D * ticksInFly / normalizedDistanceWithDrag;
+            final double dragFix = ticksInFly / normalizedDistanceWithDrag;
 
             if(motion.hasGravityAcceleration()) {
                 newVelocity.setX(newVelocity.getX() * dragFix);
@@ -215,6 +217,7 @@ public class ProjectileHoming {
                     Fix aiming of projectiles with gravity from long distances
                     with acute angles: check the approximation.
                  */
+                for(int i = 0; i < ARROW_DRAG_APPROXIMATION_ATTEMPTS; i++)
                 {
                     final double t_y = getAcceleratedAndDragged(
                             vy,
@@ -241,7 +244,7 @@ public class ProjectileHoming {
         projectile.setVelocity(newVelocity);
 
         if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Changed velocity of %s from %s to %s, ETA is %d ticks",
+            customLogger.debug(String.format("Changed velocity of %s from %s to %s, ETA is %.2f ticks",
                     getDescription(projectileSource, projectile, targetPlayer),
                     format(initialProjectileVelocity), format(newVelocity), ticksInFly));
         }
@@ -355,14 +358,14 @@ public class ProjectileHoming {
         double ticksToCollide;
         final boolean isLowDrag;
         {
-            final double lowDragT;
+            final double lowDragTicksToCollide;
             {
-                lowDragT = velocity.length()
+                lowDragTicksToCollide = velocity.length()
                         + Math.pow(Math.pow(velocity.length(), 2.0D) + 2.0D * acceleration.length() * location.length(), 0.5D)
                         / (acceleration.length());
             }
 
-            final double highDragT;
+            final double highDragTicksToCollide;
             {
                 final double maxFireballVelocity = acceleration.length() / motion.getDrag() - acceleration.length();
                 if (maxFireballVelocity <= velocity.length()) {
@@ -374,22 +377,22 @@ public class ProjectileHoming {
 
                 // When a fireball accelerates, it moves slower initially.
                 // Empirically, it loses (1 - drag) of total distance on that phase.
-                highDragT = (location.length() + (1.0D - motion.getDrag()))
+                highDragTicksToCollide = (location.length() + (1.0D - motion.getDrag()))
                         / (maxFireballVelocity - velocity.length());
             }
 
-            if(lowDragT > highDragT) {
+            if(lowDragTicksToCollide > highDragTicksToCollide) {
                 isLowDrag = true;
-                ticksToCollide = lowDragT;
+                ticksToCollide = lowDragTicksToCollide;
             } else {
                 isLowDrag = false;
-                ticksToCollide = highDragT;
+                ticksToCollide = highDragTicksToCollide;
             }
         }
 
         Location targetLocation;
 
-        int attempts = 10;
+        int attempts = FIREBALL_DRAG_APPROXIMATION_ATTEMPTS;
         do {
             attempts -= 1;
 
