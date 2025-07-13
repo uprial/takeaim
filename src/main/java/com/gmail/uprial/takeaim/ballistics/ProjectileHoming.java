@@ -21,9 +21,10 @@ public class ProjectileHoming {
     private Boolean isFireballAdapterSupported = null;
 
     private static final double MAX_ARROW_SPEED_PER_TICK = 3.0D;
-    private static final int ARROW_DRAG_APPROXIMATION_ATTEMPTS = 3;
 
-    private static final double FIREBALL_EPSILON = 0.01D;
+    private static final double DRAG_APPROXIMATION_EPSILON = 0.01D;
+
+    private static final int ARROW_DRAG_APPROXIMATION_ATTEMPTS = 5;
     private static final int FIREBALL_DRAG_APPROXIMATION_ATTEMPTS = 5;
 
     public ProjectileHoming(final TakeAim plugin, final CustomLogger customLogger) {
@@ -217,8 +218,10 @@ public class ProjectileHoming {
                     Fix aiming of projectiles with gravity from long distances
                     with acute angles: check the approximation.
                  */
-                for(int i = 0; i < ARROW_DRAG_APPROXIMATION_ATTEMPTS; i++)
-                {
+                int attempts = ARROW_DRAG_APPROXIMATION_ATTEMPTS;
+                do {
+                    attempts -= 1;
+
                     final double t_y = getAcceleratedAndDragged(
                             vy,
                             ticksInFly,
@@ -230,8 +233,13 @@ public class ProjectileHoming {
                                     / Math.pow(SERVER_TICKS_IN_SECOND, 2.0D),
                             motion.getDrag());
 
-                    vy += (targetLocation.getY() - t_y) / ticksInFly;
-                }
+                    if(Math.abs(targetLocation.getY() - t_y) < DRAG_APPROXIMATION_EPSILON) {
+                        break;
+                    }
+
+                    vy += (targetLocation.getY() - t_y) / ticksInFly * dragFix;
+
+                } while (attempts > 0);
 
                 newVelocity.setY(vy);
             } else {
@@ -416,7 +424,7 @@ public class ProjectileHoming {
                     location.length(), ticksToCollide, targetDistance,
                     actualDistance, attempts));*/
 
-            if(Math.abs(actualDistance - targetDistance) < FIREBALL_EPSILON) {
+            if(Math.abs(actualDistance - targetDistance) < DRAG_APPROXIMATION_EPSILON) {
                 break;
             }
             if(isLowDrag) {
