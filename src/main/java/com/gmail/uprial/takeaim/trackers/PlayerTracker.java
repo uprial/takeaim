@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static com.gmail.uprial.takeaim.ballistics.ProjectileMotion.DEFAULT_PLAYER_ACCELERATION;
@@ -292,8 +293,18 @@ public class PlayerTracker extends AbstractTracker {
     private boolean isPlayerJumping(final Player player) {
         return ((!player.isFlying())
                 && (!player.isGliding())
-                && (!player.isSwimming())
-                && (!player.isClimbing())
+                && (!isPlayerMethod(player, "isSwimming"))
+                && (!isPlayerMethod(player, "isClimbing"))
                 && (Math.abs(player.getVelocity().getY() - DEFAULT_PLAYER_ACCELERATION) > EPSILON));
+    }
+
+    private boolean isPlayerMethod(final Player player, final String name) {
+        try {
+            return (Boolean)player.getClass().getMethod(name).invoke(player);
+        } catch (NoSuchMethodException e) {
+            return false;
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
