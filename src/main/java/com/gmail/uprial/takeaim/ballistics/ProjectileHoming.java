@@ -22,10 +22,10 @@ public class ProjectileHoming {
 
     private static final double MAX_ARROW_SPEED_PER_TICK = 3.0D;
 
-    private static final double DRAG_APPROXIMATION_EPSILON = 0.01D;
+    private static final double DRAG_APPROXIMATION_EPSILON = 0.04D;
 
     private static final int ARROW_DRAG_APPROXIMATION_ATTEMPTS = 5;
-    private static final int FIREBALL_DRAG_APPROXIMATION_ATTEMPTS = 5;
+    private static final int FIREBALL_DRAG_APPROXIMATION_ATTEMPTS = 10;
 
     public ProjectileHoming(final TakeAim plugin, final CustomLogger customLogger) {
         this.plugin = plugin;

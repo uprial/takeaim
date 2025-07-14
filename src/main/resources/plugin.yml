@@ -1,6 +1,6 @@
 name: TakeAim
 main: com.gmail.uprial.takeaim.TakeAim
-version: 0.7.3
+version: 0.7.4
 api-version: 1.10
 commands:
    takeaim:
