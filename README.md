@@ -14,7 +14,7 @@ A Minecraft (Bukkit) plugin that allows to improve aiming of creatures.
 * Skeletons and other shooters firing projectiles (Strays having bows, Pillagers and Piglins having crossbows, Witches having potions, Ghasts, Withers, Blazes) into players with fantastic precision, considering eye position and predicting a movement target point based on the movement history.
 * Totally fair and natural aiming without cheats: a projectile direction is calculated only at an aiming stage without adjustments in flight.
 
-![TakeAim Promo](images/takeaim-promo.png)
+![A minecraft picture: a player on the right side is running away by a winding road to a red mark on the road, then left a wide river, the left a forest, then left a mountain, and then a skeleton on the mountain is shooting an arrow to the red mark on the road, there on only one arrow on the picture](images/takeaim-promo.png)
 
 ## Commands
 
