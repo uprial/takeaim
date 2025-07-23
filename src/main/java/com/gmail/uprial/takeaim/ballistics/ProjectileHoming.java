@@ -143,11 +143,9 @@ public class ProjectileHoming {
         final double ticksInFly = targetLocation.length() / initialProjectileVelocity.length();
 
         // Consider the target player is running somewhere.
-        {
-            final Vector targetVelocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
-            targetVelocity.multiply(ticksInFly);
-            targetLocation.add(targetVelocity);
-        }
+        final Vector targetVelocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
+        targetVelocity.multiply(ticksInFly);
+        targetLocation.add(targetVelocity);
 
         final ProjectileMotion motion = ProjectileMotion.getProjectileMotion(projectile);
 
@@ -156,8 +154,11 @@ public class ProjectileHoming {
             final double maxDistance = -Math.pow(MAX_ARROW_SPEED_PER_TICK * SERVER_TICKS_IN_SECOND, 2.0D) / motion.getGravityAcceleration();
 
             if (distance > maxDistance) {
-                customLogger.warning(String.format("Can't modify velocity of %s at a distance of %.2f: max distance is %.2f",
-                        getDescription(projectileSource, projectile, targetPlayer),
+                customLogger.warning(String.format(
+                        "Can't modify velocity of %s" +
+                                " to a distance of %.2f: max distance is %.2f;" +
+                                " most probably, the server is overloaded or desynced from the client",
+                        getDescription(projectileSource, projectile, targetPlayer, targetVelocity),
                         distance, maxDistance));
                 return;
             }
@@ -252,8 +253,10 @@ public class ProjectileHoming {
         projectile.setVelocity(newVelocity);
 
         if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Changed velocity of %s from %s to %s, ETA is %.2f ticks",
-                    getDescription(projectileSource, projectile, targetPlayer),
+            customLogger.debug(String.format(
+                    "Changed velocity of %s" +
+                            " from %s to %s, ETA is %.2f ticks",
+                    getDescription(projectileSource, projectile, targetPlayer, targetVelocity),
                     format(initialProjectileVelocity), format(newVelocity), ticksInFly));
         }
     }
@@ -377,8 +380,10 @@ public class ProjectileHoming {
             {
                 final double maxFireballVelocity = acceleration.length() / motion.getDrag() - acceleration.length();
                 if (maxFireballVelocity <= velocity.length()) {
-                    customLogger.warning(String.format("Can't modify acceleration of %s with player velocity %.2f: max fireball velocity is %.2f",
-                            getDescription(projectileSource, fireball, targetPlayer),
+                    customLogger.warning(String.format(
+                            "Can't modify acceleration of %s" +
+                                    " with player velocity %.2f: max fireball velocity is %.2f",
+                            getDescription(projectileSource, fireball, targetPlayer, velocity),
                             velocity.length(), maxFireballVelocity));
                     return;
                 }
@@ -433,8 +438,10 @@ public class ProjectileHoming {
                 final double playerVelocity = (targetDistance - location.length()) / ticksToCollide;
                 final double maxFireballVelocity = acceleration.length() / motion.getDrag() - acceleration.length();
                 if (maxFireballVelocity <= playerVelocity) {
-                    customLogger.warning(String.format("Can't modify acceleration of %s with player velocity %.2f: max fireball velocity is %.2f",
-                            getDescription(projectileSource, fireball, targetPlayer),
+                    customLogger.warning(String.format(
+                            "Can't modify acceleration of %s" +
+                                    " with player velocity %.2f: max fireball velocity is %.2f",
+                            getDescription(projectileSource, fireball, targetPlayer, velocity),
                             playerVelocity, maxFireballVelocity));
                     return;
                 } else {
@@ -448,12 +455,16 @@ public class ProjectileHoming {
         FireballAdapter.setAcceleration(fireball, newAcceleration);
 
         if(attempts <= 0) {
-            customLogger.warning(String.format("Changed acceleration of %s from %s to %s, ETA is %.2f ticks, no attempts left",
-                    getDescription(projectileSource, fireball, targetPlayer),
+            customLogger.warning(String.format(
+                    "Changed acceleration of %s" +
+                            " from %s to %s, ETA is %.2f ticks, no attempts left",
+                    getDescription(projectileSource, fireball, targetPlayer, velocity),
                     format(acceleration), format(newAcceleration), ticksToCollide));
         } else if(customLogger.isDebugMode()) {
-            customLogger.debug(String.format("Changed acceleration of %s from %s to %s, ETA is %.2f ticks, %d attempts left",
-                    getDescription(projectileSource, fireball, targetPlayer),
+            customLogger.debug(String.format(
+                    "Changed acceleration of %s" +
+                            " from %s to %s, ETA is %.2f ticks, %d attempts left",
+                    getDescription(projectileSource, fireball, targetPlayer, velocity),
                     format(acceleration), format(newAcceleration), ticksToCollide, attempts));
         }
     }
@@ -486,8 +497,11 @@ public class ProjectileHoming {
                 .multiply(0.5D);
     }
 
-    private String getDescription(final LivingEntity projectileSource, final Projectile projectile, final Player targetPlayer) {
-        return String.format("%s launched by %s targeted at %s",
-                format(projectile), format(projectileSource), format(targetPlayer));
+    private String getDescription(final LivingEntity projectileSource,
+                                  final Projectile projectile,
+                                  final Player targetPlayer,
+                                  final Vector targetVelocity) {
+        return String.format("%s launched by %s targeted at %s moving with %s",
+                format(projectile), format(projectileSource), format(targetPlayer), format(targetVelocity));
     }
 }
