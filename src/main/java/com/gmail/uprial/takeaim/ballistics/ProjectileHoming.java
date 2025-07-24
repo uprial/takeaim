@@ -143,9 +143,9 @@ public class ProjectileHoming {
         final double ticksInFly = targetLocation.length() / initialProjectileVelocity.length();
 
         // Consider the target player is running somewhere.
-        final Vector targetVelocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
-        targetVelocity.multiply(ticksInFly);
-        targetLocation.add(targetVelocity);
+        final Vector velocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
+        velocity.multiply(ticksInFly);
+        targetLocation.add(velocity.clone().multiply(ticksInFly));
 
         final ProjectileMotion motion = ProjectileMotion.getProjectileMotion(projectile);
 
@@ -156,9 +156,8 @@ public class ProjectileHoming {
             if (distance > maxDistance) {
                 customLogger.warning(String.format(
                         "Can't modify velocity of %s" +
-                                " to a distance of %.2f: max distance is %.2f;" +
-                                " most probably, the server is overloaded or desynced from the client",
-                        getDescription(projectileSource, projectile, targetPlayer, targetVelocity),
+                                " to a distance of %.2f: max distance is %.2f",
+                        getDescription(projectileSource, projectile, targetPlayer, velocity),
                         distance, maxDistance));
                 return;
             }
@@ -256,7 +255,7 @@ public class ProjectileHoming {
             customLogger.debug(String.format(
                     "Changed velocity of %s" +
                             " from %s to %s, ETA is %.2f ticks",
-                    getDescription(projectileSource, projectile, targetPlayer, targetVelocity),
+                    getDescription(projectileSource, projectile, targetPlayer, velocity),
                     format(initialProjectileVelocity), format(newVelocity), ticksInFly));
         }
     }

@@ -3,6 +3,7 @@ package com.gmail.uprial.takeaim.common;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 public final class Formatter {
@@ -17,6 +18,19 @@ public final class Formatter {
                 location.getX(), location.getY(), location.getZ(),
                 (entity instanceof LivingEntity) ? ((LivingEntity) entity).getHealth() : -1.0D,
                 entity.getUniqueId().toString().substring(0, 8));
+    }
+
+    public static String format(Player player) {
+        if (player == null) {
+            return "null";
+        }
+        final Location location = player.getLocation();
+        return String.format("%s[w: %s, x: %.2f, y: %.2f, z: %.2f, hp: %.2f, id: %s]",
+                player.getName(),
+                (location.getWorld() != null) ? location.getWorld().getName() : "empty",
+                location.getX(), location.getY(), location.getZ(),
+                player.getHealth(),
+                player.getUniqueId().toString().substring(0, 8));
     }
 
     public static String format(Vector vector) {
