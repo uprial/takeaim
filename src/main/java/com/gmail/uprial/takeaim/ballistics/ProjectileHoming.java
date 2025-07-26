@@ -144,21 +144,19 @@ public class ProjectileHoming {
 
         // Consider the target player is running somewhere.
         final Vector velocity = plugin.getPlayerTracker().getPlayerMovementVector(targetPlayer);
-        velocity.multiply(ticksInFly);
         targetLocation.add(velocity.clone().multiply(ticksInFly));
 
         final ProjectileMotion motion = ProjectileMotion.getProjectileMotion(projectile);
 
         if(motion.hasGravityAcceleration()) {
-            final double distance = targetLocation.length();
-            final double maxDistance = -Math.pow(MAX_ARROW_SPEED_PER_TICK * SERVER_TICKS_IN_SECOND, 2.0D) / motion.getGravityAcceleration();
+            final double maxHeight = -Math.pow(MAX_ARROW_SPEED_PER_TICK * SERVER_TICKS_IN_SECOND, 2.0D) / motion.getGravityAcceleration();
 
-            if (distance > maxDistance) {
+            if (targetLocation.getY() > maxHeight) {
                 customLogger.warning(String.format(
-                        "Can't modify velocity of %s" +
-                                " to a distance of %.2f: max distance is %.2f",
-                        getDescription(projectileSource, projectile, targetPlayer, velocity),
-                        distance, maxDistance));
+                        "Can't modify velocity %s of %s" +
+                                " to a height of %.2f in %.2fs: max height is %.2f",
+                        format(initialProjectileVelocity), getDescription(projectileSource, projectile, targetPlayer, velocity),
+                        targetLocation.getY(), ticksInFly, maxHeight));
                 return;
             }
         }
@@ -380,9 +378,9 @@ public class ProjectileHoming {
                 final double maxFireballVelocity = acceleration.length() / motion.getDrag() - acceleration.length();
                 if (maxFireballVelocity <= velocity.length()) {
                     customLogger.warning(String.format(
-                            "Can't modify acceleration of %s" +
+                            "Can't modify acceleration %s of %s" +
                                     " with player velocity %.2f: max fireball velocity is %.2f",
-                            getDescription(projectileSource, fireball, targetPlayer, velocity),
+                            format(acceleration), getDescription(projectileSource, fireball, targetPlayer, velocity),
                             velocity.length(), maxFireballVelocity));
                     return;
                 }
@@ -438,10 +436,10 @@ public class ProjectileHoming {
                 final double maxFireballVelocity = acceleration.length() / motion.getDrag() - acceleration.length();
                 if (maxFireballVelocity <= playerVelocity) {
                     customLogger.warning(String.format(
-                            "Can't modify acceleration of %s" +
-                                    " with player velocity %.2f: max fireball velocity is %.2f",
-                            getDescription(projectileSource, fireball, targetPlayer, velocity),
-                            playerVelocity, maxFireballVelocity));
+                            "Can't modify acceleration %s of %s" +
+                                    " with player velocity %.2f for %.2fs: max fireball velocity is %.2f",
+                            format(acceleration), getDescription(projectileSource, fireball, targetPlayer, velocity),
+                            playerVelocity, ticksToCollide, maxFireballVelocity));
                     return;
                 } else {
                     ticksToCollide += (targetDistance - actualDistance) / (maxFireballVelocity - playerVelocity);
