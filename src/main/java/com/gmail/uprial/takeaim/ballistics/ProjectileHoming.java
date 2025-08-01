@@ -20,7 +20,7 @@ public class ProjectileHoming {
 
     private Boolean isFireballAdapterSupported = null;
 
-    private static final double ARROW_TERMINAL_VELOCITY = 60.0D / SERVER_TICKS_IN_SECOND;
+    private static final double ARROW_TERMINAL_VELOCITY = 100.0D / SERVER_TICKS_IN_SECOND;
 
     private static final double DRAG_APPROXIMATION_EPSILON = 0.04D;
 
