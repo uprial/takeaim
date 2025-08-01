@@ -106,12 +106,14 @@ public class ProjectileMotion {
         if(projectile.getClass().getName().endsWith("Arrow")
             || projectile.getClass().getName().endsWith("Trident")) {
             return new ProjectileMotion(-0.05, 0.01, false);
+        } else if (projectile instanceof ThrownPotion) {
+            return new ProjectileMotion(-0.05, 0.01, false);
         } else if (projectile instanceof WitherSkull) { // sub-instance of Fireball
             return new ProjectileMotion(0.0, 0.27, true);
         } else if (projectile instanceof Fireball) {
             return new ProjectileMotion(0.0, 0.05, true);
         } else if ((projectile instanceof Egg) || (projectile instanceof Snowball)
-                || (projectile instanceof EnderPearl) || (projectile instanceof ThrownPotion)) {
+                || (projectile instanceof EnderPearl)) {
             return new ProjectileMotion(-0.03, 0.01, false);
         } else {
             return null;
