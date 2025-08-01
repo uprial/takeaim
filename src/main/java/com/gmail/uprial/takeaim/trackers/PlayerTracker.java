@@ -1,6 +1,7 @@
 package com.gmail.uprial.takeaim.trackers;
 
 import com.gmail.uprial.takeaim.TakeAim;
+import com.gmail.uprial.takeaim.common.CustomLogger;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -49,14 +50,17 @@ public class PlayerTracker extends AbstractTracker {
     private static final double PROPORTION_EPSILON = 0.02D;
 
     private final TakeAim plugin;
+    private final CustomLogger customLogger;
 
     final Map<UUID, TimerWheel> players = new HashMap<>();
     int currentIndex = 0;
 
-    public PlayerTracker(final TakeAim plugin) {
+    public PlayerTracker(final TakeAim plugin,
+                         final CustomLogger customLogger) {
         super(plugin, INTERVAL);
 
         this.plugin = plugin;
+        this.customLogger = customLogger;
 
         onConfigChange();
     }
@@ -126,6 +130,10 @@ public class PlayerTracker extends AbstractTracker {
 
     @Override
     public void run() {
+        final long start = System.currentTimeMillis();
+        int processed = 0;
+        int total = 0;
+
         final int nextIndex = getNext(currentIndex);
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             final UUID uuid = player.getUniqueId();
@@ -141,9 +149,17 @@ public class PlayerTracker extends AbstractTracker {
                     players.put(uuid, wheel);
                 }
                 wheel.put(nextIndex, new Checkpoint(player.getLocation(), isPlayerJumping(player)));
+                processed++;
             }
+            total++;
         }
         currentIndex = nextIndex;
+
+        final long end = System.currentTimeMillis();
+        if(end - start >= 5) {
+            customLogger.warning(String.format("PlayerTracker cron took %dms, updated %d/%d players",
+                    end - start, processed, total));
+        }
     }
 
     @Override

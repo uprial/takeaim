@@ -28,7 +28,7 @@ public class PlayerTrackerTest extends TestConfigBase {
 
     private static class TestPlayerTracker extends PlayerTracker {
         TestPlayerTracker(final TakeAim plugin, final Player player) {
-            super(plugin);
+            super(plugin, null);
 
             players.put(player.getUniqueId(), new PlayerTracker.TimerWheel());
         }
