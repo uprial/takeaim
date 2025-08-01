@@ -20,7 +20,7 @@ public class ProjectileHoming {
 
     private Boolean isFireballAdapterSupported = null;
 
-    private static final double MAX_ARROW_SPEED_PER_TICK = 3.0D;
+    private static final double ARROW_TERMINAL_VELOCITY = 60.0D / SERVER_TICKS_IN_SECOND;
 
     private static final double DRAG_APPROXIMATION_EPSILON = 0.04D;
 
@@ -149,7 +149,7 @@ public class ProjectileHoming {
         final ProjectileMotion motion = ProjectileMotion.getProjectileMotion(projectile);
 
         if(motion.hasGravityAcceleration()) {
-            final double maxHeight = -Math.pow(MAX_ARROW_SPEED_PER_TICK * SERVER_TICKS_IN_SECOND, 2.0D) / motion.getGravityAcceleration();
+            final double maxHeight = -Math.pow(ARROW_TERMINAL_VELOCITY, 2.0D) / motion.getGravityAcceleration();
 
             if (targetLocation.getY() > maxHeight) {
                 customLogger.warning(String.format(
@@ -171,9 +171,9 @@ public class ProjectileHoming {
             if (motion.hasGravityAcceleration()) {
                 final double y1 = 0.0D;
                 final double y2 = targetLocation.getY();
-                final double t = ticksInFly / SERVER_TICKS_IN_SECOND;
+                final double t = ticksInFly;
 
-                vy = ((y2 - (motion.getGravityAcceleration() * t * t / 2.0D) - y1) / t) / SERVER_TICKS_IN_SECOND;
+                vy = ((y2 - (motion.getGravityAcceleration() * t * t / 2.0D) - y1) / t);
             } else {
                 vy = targetLocation.getY() / ticksInFly;
             }
@@ -223,13 +223,9 @@ public class ProjectileHoming {
                     final double t_y = getAcceleratedAndDragged(
                             vy,
                             ticksInFly,
-                            motion.getGravityAcceleration()
-                                /*
-                                    Dimension of getGravityAcceleration() is m/s^2,
-                                    but we need block/tick^2.
-                                 */
-                                    / Math.pow(SERVER_TICKS_IN_SECOND, 2.0D),
-                            motion.getDrag());
+                            motion.getGravityAcceleration(),
+                            motion.getDrag(),
+                            motion.getDragAfter());
 
                     if(Math.abs(targetLocation.getY() - t_y) < DRAG_APPROXIMATION_EPSILON) {
                         break;
@@ -415,7 +411,8 @@ public class ProjectileHoming {
                     0.0D,
                     ticksToCollide,
                     acceleration.length(),
-                    motion.getDrag());
+                    motion.getDrag(),
+                    motion.getDragAfter());
 
             /*customLogger.info(String.format("Attempt to aim of %s: " +
                             "drag %.2f, is-low-drag %b, " +
@@ -469,19 +466,30 @@ public class ProjectileHoming {
     private double getAcceleratedAndDragged(double velocity,
                                             final double doubleTicks,
                                             final double acceleration,
-                                            final double drag) {
+                                            final double drag,
+                                            final boolean dragAfter) {
         // Apply velocity 1st time before gravity and drag
         double position = velocity;
         int intTicks = (int)Math.floor(doubleTicks);
         for (int i = 0; i < intTicks; i++) {
-            velocity += acceleration;
-            velocity *= (1 - drag);
+            if(dragAfter) {
+                velocity += acceleration;
+                velocity *= (1 - drag);
+            } else {
+                velocity *= (1 - drag);
+                velocity += acceleration;
+            }
             position += velocity;
         }
         // Apply the last, potentially partial tick
         if(doubleTicks > intTicks) {
-            velocity += acceleration;
-            velocity *= (1 - drag);
+            if(dragAfter) {
+                velocity += acceleration;
+                velocity *= (1 - drag);
+            } else {
+                velocity *= (1 - drag);
+                velocity += acceleration;
+            }
             position += velocity * (doubleTicks - intTicks);
         }
 
