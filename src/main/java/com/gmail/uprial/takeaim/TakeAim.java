@@ -31,7 +31,7 @@ public final class TakeAim extends JavaPlugin {
         consoleLogger = new CustomLogger(getLogger());
         takeAimConfig = loadConfig(getConfig(), consoleLogger);
 
-        playerTracker = new PlayerTracker(this, consoleLogger);
+        playerTracker = new PlayerTracker(this, consoleLogger, takeAimConfig.getPlayerTrackingTimeoutInMs());
         projectileTracker = new ProjectileTracker(this, consoleLogger);
 
         getServer().getPluginManager().registerEvents(new TakeAimAttackEventListener(this, consoleLogger), this);

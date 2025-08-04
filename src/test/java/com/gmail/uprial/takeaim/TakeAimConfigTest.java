@@ -42,7 +42,7 @@ public class TakeAimConfigTest extends TestConfigBase {
     @Test
     public void testEmptyWorlds() throws Exception {
         assertEquals(
-                "enabled: true, worlds: null, exclude-biomes: null",
+                "enabled: true, worlds: null, exclude-biomes: null, player-tracking-timeout-in-ms: 5",
                 loadConfig("enabled: true", "").toString());
     }
 
@@ -69,11 +69,15 @@ public class TakeAimConfigTest extends TestConfigBase {
     @Test
     public void testNormalConfig() throws Exception {
         assertEquals(
-                "enabled: true, worlds: [world], exclude-biomes: [BIRCH_FOREST]",
+                "enabled: true, " +
+                        "worlds: [world], " +
+                        "exclude-biomes: [BIRCH_FOREST], " +
+                        "player-tracking-timeout-in-ms: 6",
                 loadConfig("enabled: true",
                         "worlds:",
                         " - world",
                         "exclude-biomes:",
-                        " - BIRCH_FOREST").toString());
+                        " - BIRCH_FOREST",
+                        "player-tracking-timeout-in-ms: 6").toString());
     }
 }

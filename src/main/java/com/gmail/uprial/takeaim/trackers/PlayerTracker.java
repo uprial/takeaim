@@ -51,16 +51,19 @@ public class PlayerTracker extends AbstractTracker {
 
     private final TakeAim plugin;
     private final CustomLogger customLogger;
+    private final int timeoutInMs;
 
     final Map<UUID, TimerWheel> players = new HashMap<>();
     int currentIndex = 0;
 
     public PlayerTracker(final TakeAim plugin,
-                         final CustomLogger customLogger) {
+                         final CustomLogger customLogger,
+                         final int timeoutInMs) {
         super(plugin, INTERVAL);
 
         this.plugin = plugin;
         this.customLogger = customLogger;
+        this.timeoutInMs = timeoutInMs;
 
         onConfigChange();
     }
@@ -156,7 +159,7 @@ public class PlayerTracker extends AbstractTracker {
         currentIndex = nextIndex;
 
         final long end = System.currentTimeMillis();
-        if(end - start >= 5) {
+        if(end - start >= timeoutInMs) {
             customLogger.warning(String.format("PlayerTracker cron took %dms, updated %d/%d players",
                     end - start, processed, total));
         }

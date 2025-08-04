@@ -35,3 +35,15 @@ enabled: true
 #     ...
 #   - <biomeN>
 #
+
+#
+# Show a warning when periodic player tracking takes more time than expected.
+#
+# When reporting to the plugin Author with details about
+# the players online, other plugins, previous log records, etc.,
+# you may request an improvement of the plugin for your server.
+#
+# Possible values: 1 ... 3600_000.
+# Default value: 5.
+#
+player-tracking-timeout-in-ms: 5
