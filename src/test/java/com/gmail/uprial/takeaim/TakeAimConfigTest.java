@@ -67,6 +67,21 @@ public class TakeAimConfigTest extends TestConfigBase {
     }
 
     @Test
+    public void testWrongEnabled() throws Exception {
+        e.expect(InvalidConfigException.class);
+        e.expectMessage("");
+        loadConfig("enabled: v");
+    }
+
+    @Test
+    public void testWrongTimeoutInS() throws Exception {
+        e.expect(InvalidConfigException.class);
+        e.expectMessage("");
+        loadConfig("enabled: true",
+                "player-tracking-timeout-in-ms: v");
+    }
+
+    @Test
     public void testNormalConfig() throws Exception {
         assertEquals(
                 "enabled: true, " +
