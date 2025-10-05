@@ -70,7 +70,8 @@ public class TakeAimAttackEventListener implements Listener {
                         final UUID targetPlayerUUID = getMetadata(projectileSource, MK_TARGET_PLAYER_UUID);
                         if (targetPlayerUUID != null) {
                             final Player targetPlayer = plugin.getPlayerTracker().getOnlinePlayerByUUID(targetPlayerUUID);
-                            if (targetPlayer != null) {
+                            if ((targetPlayer != null)
+                                    && (targetPlayer.getWorld().getUID().equals(projectile.getWorld().getUID()))) {
                                 homing.aimProjectile(projectileSource, projectile, targetPlayer);
                             }
                         }

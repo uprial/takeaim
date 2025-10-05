@@ -46,4 +46,4 @@ enabled: true
 # Possible values: 1 ... 3600_000.
 # Default value: 5.
 #
-player-tracking-timeout-in-ms: 5
+player-tracking-timeout-in-ms: 10
